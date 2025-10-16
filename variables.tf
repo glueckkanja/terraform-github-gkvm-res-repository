@@ -318,7 +318,6 @@ variable "files" {
   type = list(object({
     content    = string
     file       = string
-    repository = string
 
     autocreate_branch               = optional(bool, false)
     autocreate_branch_source_branch = optional(string, null)
