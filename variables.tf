@@ -212,7 +212,7 @@ variable "pages" {
       path   = optional(string, null)
     }), null)
     build_type = optional(string, null)
-    cname = optional(string, null)
+    cname      = optional(string, null)
   })
   description = <<DESCRIPTION
 (Optional) The repository's GitHub Pages configuration. Set to `null` to disable GitHub Pages.
@@ -234,7 +234,7 @@ variable "security_and_analysis" {
     advanced_security = optional(object({
       status = string # Can be "enabled" or "disabled"
     }), null)
-    secret_scanning  = optional(object({
+    secret_scanning = optional(object({
       status = string # Can be "enabled" or "disabled"
     }), null)
     secret_scanning_push_protection = optional(object({
@@ -308,7 +308,7 @@ DESCRIPTION
 }
 
 variable "repository_rulesets" {
-  type = list(object({}))
+  type        = list(any)
   description = "(Optional) A list of rulesets to apply to the repository."
   default     = []
   nullable    = false
