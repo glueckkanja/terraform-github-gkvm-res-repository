@@ -109,3 +109,24 @@ module "rulesets" {
     github_repository.this
   ]
 }
+
+module "files" {
+  source   = "./modules/file"
+  for_each = { for idx, val in var.files : val.file => val }
+
+  content    = each.value.content
+  file       = each.value.file
+  repository = github_repository.this.name
+
+  autocreate_branch               = each.value.autocreate_branch
+  autocreate_branch_source_branch = each.value.autocreate_branch_source_branch
+  autocreate_branch_source_sha    = each.value.autocreate_branch_source_sha
+  branch                          = each.value.branch
+  commit_author                   = each.value.commit_author
+  commit_email                    = each.value.commit_email
+  commit_message                  = each.value.commit_message
+
+  depends_on = [
+    github_repository.this
+  ]
+}
