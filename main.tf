@@ -82,3 +82,30 @@ resource "github_repository" "this" {
     }
   }
 }
+
+resource "github_branch_default" "this" {
+  count = var.default_branch == null ? 0 : 1
+
+  repository = var.name
+  branch     = var.default_branch.branch
+  rename     = var.default_branch.rename
+}
+
+module "rulesets" {
+  source   = "./modules/ruleset"
+  for_each = repository_rulesets
+
+  enforcement = each.value.enforcement
+  name        = each.value.name
+
+  target     = each.value.target
+  repository = github_repository.this.name
+
+  bypass_actors = each.value.bypass_actors
+  conditions    = each.value.conditions
+  rules         = each.value.rules
+
+  depends_on = [
+    github_repository.this
+  ]
+}

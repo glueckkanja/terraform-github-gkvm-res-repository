@@ -292,6 +292,28 @@ variable "allow_update_branch" {
   nullable    = false
 }
 
+variable "default_branch" {
+  type = object({
+    branch = string
+    rename = optional(bool, false)
+  })
+  description = <<DESCRIPTION
+This setting allows you to set the default branch. Set this to `null` to leave the default branch unchanged.
+
+`branch` - (Required) The name of the branch to set as the default branch.
+`rename` - (Optional) Whether to rename the default branch if it already exists. Defaults to `false`.
+DESCRIPTION
+  default     = null
+  nullable    = true
+}
+
+variable "repository_rulesets" {
+  type = list(object({}))
+  description = "(Optional) A list of rulesets to apply to the repository."
+  default     = []
+  nullable    = false
+}
+
 variable "enable_telemetry" {
   type        = bool
   default     = true
