@@ -255,13 +255,8 @@ Conditions that must be met for the ruleset to apply. This object supports the f
   - `include` - (Required) A list of reference names that must be included.
   - `exclude` - (Required) A list of reference names that must be excluded.
 DESCRIPTION
-  default = {
-    ref_name = {
-      include = []
-      exclude = []
-    }
-  }
-  nullable = false
+  default     = null
+  nullable    = true
 }
 
 variable "repository" {
