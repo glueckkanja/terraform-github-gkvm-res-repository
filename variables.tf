@@ -18,13 +18,6 @@ variable "homepage_url" {
   default     = null
 }
 
-variable "private" {
-  type        = bool
-  description = "Whether the repository is private or public."
-  default     = false
-  nullable    = false
-}
-
 variable "visibility" {
   type        = string
   description = <<DESCRIPTION

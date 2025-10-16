@@ -22,7 +22,6 @@ resource "github_repository" "this" {
   license_template                        = var.license_template
   merge_commit_message                    = var.merge_commit_message
   merge_commit_title                      = var.merge_commit_title
-  private                                 = var.private
   squash_merge_commit_message             = var.squash_merge_commit_message
   squash_merge_commit_title               = var.squash_merge_commit_title
   visibility                              = var.visibility
