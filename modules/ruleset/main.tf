@@ -142,7 +142,7 @@ resource "github_repository_ruleset" "this" {
         content {
 
           dynamic "required_code_scanning_tool" {
-            for_each = var.rules.required_code_scanning.required_code_scanning_tools
+            for_each = var.rules.required_code_scanning.required_code_scanning_tool
             content {
               alerts_threshold          = required_code_scanning_tool.value.alerts_threshold
               security_alerts_threshold = required_code_scanning_tool.value.security_alerts_threshold
