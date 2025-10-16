@@ -115,7 +115,7 @@ resource "github_repository_ruleset" "this" {
         content {
 
           dynamic "required_check" {
-            for_each = var.rules.required_status_checks.required_checks
+            for_each = var.rules.required_status_checks.required_check
             content {
               context = required_check.value.context
               app_id  = required_check.value.app_id
