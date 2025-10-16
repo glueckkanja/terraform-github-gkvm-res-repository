@@ -10,4 +10,5 @@ resource "github_repository_file" "this" {
   commit_author                   = var.commit_author
   commit_email                    = var.commit_email
   commit_message                  = var.commit_message
+  overwrite_on_create             = var.overwrite_on_create
 }

@@ -85,3 +85,10 @@ variable "autocreate_branch_source_sha" {
   default     = null
   nullable    = true
 }
+
+variable "overwrite_on_create" {
+  type        = bool
+  description = "(Optional) Whether to overwrite the file if it already exists when creating it. Default: true."
+  default     = true
+  nullable    = false
+}
