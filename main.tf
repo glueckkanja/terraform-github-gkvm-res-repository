@@ -32,21 +32,45 @@ resource "github_repository" "this" {
   dynamic "pages" {
     for_each = var.pages == null ? [] : [1]
     content {
-      source = var.pages.source == null ? null : {
-        branch = var.pages.source.branch
-        path   = var.pages.source.path == null ? null : var.pages.source.path
-      }
+
       build_type = var.pages.build_type == null ? null : var.pages.build_type
       cname      = var.pages.cname == null ? null : var.pages.cname
+
+      dynamic "source" {
+        for_each = var.pages.source == null ? [] : [1]
+        content {
+          branch = var.pages.source.branch
+          path   = var.pages.source.path == null ? null : var.pages.source.path
+        }
+      }
+
     }
   }
 
   dynamic "security_and_analysis" {
     for_each = var.security_and_analysis == null ? [] : [1]
     content {
-      advanced_security               = var.security_and_analysis.advanced_security == null ? null : var.security_and_analysis.advanced_security
-      secret_scanning                 = var.security_and_analysis.secret_scanning == null ? null : var.security_and_analysis.secret_scanning
-      secret_scanning_push_protection = var.security_and_analysis.secret_scanning_push_protection == null ? null : var.security_and_analysis.secret_scanning_push_protection
+
+      dynamic "advanced_security" {
+        for_each = var.security_and_analysis.advanced_security == null ? [] : [1]
+        content {
+          status = var.security_and_analysis.advanced_security.status
+        }
+      }
+
+      dynamic "secret_scanning" {
+        for_each = var.security_and_analysis.secret_scanning == null ? [] : [1]
+        content {
+          status = var.security_and_analysis.secret_scanning.status
+        }
+      }
+
+      dynamic "secret_scanning_push_protection" {
+        for_each = var.security_and_analysis.secret_scanning_push_protection == null ? [] : [1]
+        content {
+          status = var.security_and_analysis.secret_scanning_push_protection.status
+        }
+      }
     }
   }
 
