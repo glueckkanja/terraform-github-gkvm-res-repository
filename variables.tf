@@ -222,7 +222,8 @@ variable "pages" {
     cname = optional(string, null)
   })
   description = <<DESCRIPTION
-(Optional) The repository's GitHub Pages configuration.
+(Optional) The repository's GitHub Pages configuration. Set to `null` to disable GitHub Pages.
+If omitted, GitHub Pages will not be configured.
 
 `source` - (Optional) The source configuration for GitHub Pages.
   `branch` - (Required) The branch to use for GitHub Pages.

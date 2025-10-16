@@ -1,50 +1,61 @@
 resource "github_repository" "this" {
-  for_each = local.github_repository
+  name = var.name
 
-  name                        = each.value.name
-  allow_auto_merge            = each.value.allow_auto_merge
-  allow_merge_commit          = each.value.allow_merge_commit
-  allow_rebase_merge          = each.value.allow_rebase_merge
-  allow_squash_merge          = each.value.allow_squash_merge
-  allow_update_branch         = each.value.allow_update_branch
-  archive_on_destroy          = each.value.archive_on_destroy
-  archived                    = each.value.archived
-  auto_init                   = each.value.auto_init
-  gitignore_template          = each.value.gitignore_template
-  has_discussions             = each.value.has_discussions
-  has_downloads               = each.value.has_downloads
-  has_issues                  = each.value.has_issues
-  has_projects                = each.value.has_projects
-  has_wiki                    = each.value.has_wiki
-  homepage_url                = each.value.homepage_url
-  is_template                 = each.value.is_template
-  merge_commit_message        = each.value.merge_commit_message
-  merge_commit_title          = each.value.merge_commit_title
-  squash_merge_commit_message = each.value.squash_merge_commit_message
-  squash_merge_commit_title   = each.value.squash_merge_commit_title
-  topics                      = each.value.topics
-  visibility                  = each.value.visibility
+  allow_auto_merge                        = var.allow_auto_merge
+  allow_merge_commit                      = var.allow_merge_commit
+  allow_rebase_merge                      = var.allow_rebase_merge
+  allow_squash_merge                      = var.allow_squash_merge
+  allow_update_branch                     = var.allow_update_branch
+  archive_on_destroy                      = var.archive_on_destroy
+  archived                                = var.archived
+  auto_init                               = var.auto_init
+  delete_branch_on_merge                  = var.delete_branch_on_merge
+  description                             = var.description
+  gitignore_template                      = var.gitignore_template
+  has_discussions                         = var.has_discussions
+  has_issues                              = var.has_issues
+  has_projects                            = var.has_projects
+  has_wiki                                = var.has_wiki
+  homepage_url                            = var.homepage_url
+  ignore_vulnerability_alerts_during_read = var.ignore_vulnerability_alerts_during_read
+  is_template                             = var.is_template
+  license_template                        = var.license_template
+  merge_commit_message                    = var.merge_commit_message
+  merge_commit_title                      = var.merge_commit_title
+  private                                 = var.private
+  squash_merge_commit_message             = var.squash_merge_commit_message
+  squash_merge_commit_title               = var.squash_merge_commit_title
+  visibility                              = var.visibility
+  vulnerability_alerts                    = var.vulnerability_alerts
+  web_commit_signoff_required             = var.web_commit_signoff_required
 
-  dynamic "template" {
-    for_each = each.value.template
+  dynamic "pages" {
+    for_each = var.pages == null ? [] : [1]
     content {
-      owner                = template.value.owner
-      repository           = template.value.repository
-      include_all_branches = template.value.include_all_branches
+      source = var.pages.source == null ? null : {
+        branch = var.pages.source.branch
+        path   = var.pages.source.path == null ? null : var.pages.source.path
+      }
+      build_type = var.pages.build_type == null ? null : var.pages.build_type
+      cname      = var.pages.cname == null ? null : var.pages.cname
     }
   }
 
-  depends_on = [
-    data.github_user.onboarding
-  ]
-
-  lifecycle {
-    # Added to ignore changes to the template block to avoid by any means that something goes wrong :-)
-    ignore_changes = [
-      template,
-      vulnerability_alerts,
-      topics,
-    ]
+  dynamic "security_and_analysis" {
+    for_each = var.security_and_analysis == null ? [] : [1]
+    content {
+      advanced_security               = var.security_and_analysis.advanced_security == null ? null : var.security_and_analysis.advanced_security
+      secret_scanning                 = var.security_and_analysis.secret_scanning == null ? null : var.security_and_analysis.secret_scanning
+      secret_scanning_push_protection = var.security_and_analysis.secret_scanning_push_protection == null ? null : var.security_and_analysis.secret_scanning_push_protection
+    }
   }
 
+  dynamic "template" {
+    for_each = var.template == null ? [] : [1]
+    content {
+      owner      = var.template.owner
+      repository = var.template.repository
+      branch     = var.template.branch
+    }
+  }
 }
