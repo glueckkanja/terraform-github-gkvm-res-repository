@@ -93,7 +93,7 @@ resource "github_branch_default" "this" {
 
 module "rulesets" {
   source   = "./modules/ruleset"
-  for_each = repository_rulesets
+  for_each = var.repository_rulesets
 
   enforcement = each.value.enforcement
   name        = each.value.name
