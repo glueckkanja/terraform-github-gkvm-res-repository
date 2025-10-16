@@ -1,93 +1,301 @@
-variable "location" {
-  type        = string
-  description = "Azure region where the resource should be deployed."
-  nullable    = false
-}
-
 variable "name" {
   type        = string
-  description = "The name of the this resource."
+  description = "The name of the repository."
+  nullable    = false
+}
 
+variable "description" {
+  type        = string
+  description = "A short description of the repository."
+  nullable    = true
+  default     = null
+}
+
+variable "homepage_url" {
+  type        = string
+  description = "A URL with more information about the repository."
+  nullable    = true
+  default     = null
+}
+
+variable "private" {
+  type        = bool
+  description = "Whether the repository is private or public."
+  default     = false
+  nullable    = false
+}
+
+variable "visibility" {
+  type        = string
+  description = <<DESCRIPTION
+Can be `public` or `private`. If your organization is associated with an enterprise account using GitHub Enterprise Cloud or GitHub Enterprise Server 2.20+,
+visibility can also be `internal`. The visibility parameter overrides the private parameter.
+DESCRIPTION
+  default     = null
+  nullable    = true
   validation {
-    condition     = can(regex("TODO", var.name))
-    error_message = "The name must be TODO." # TODO remove the example below once complete:
-    #condition     = can(regex("^[a-z0-9]{5,50}$", var.name))
-    #error_message = "The name must be between 5 and 50 characters long and can only contain lowercase letters and numbers."
+    condition     = var.visibility == null || var.visibility == "public" || var.visibility == "private" || var.visibility == "internal"
+    error_message = "The visibility variable must be either 'public', 'private', 'internal' or null."
   }
 }
 
-# This is required for most resource modules
-variable "resource_group_name" {
-  type        = string
-  description = "The resource group where the resources will be deployed."
+variable "has_issues" {
+  type        = bool
+  description = "Whether issues are enabled."
+  default     = true
+  nullable    = false
 }
 
-# required AVM interfaces
-# remove only if not supported by the resource
-# tflint-ignore: terraform_unused_declarations
-variable "customer_managed_key" {
+variable "has_discussions" {
+  type        = bool
+  description = "(Optional) Set to `true` to enable GitHub Discussions on the repository. Defaults to `false`."
+  default     = false
+
+}
+
+variable "has_projects" {
+  type        = bool
+  description = <<DESCRIPTION
+(Optional) Set to `true` to enable the GitHub Projects features on the repository.
+Per the GitHub documentation when in an organization that has disabled repository projects it will default to `false` and will otherwise default to `true`.
+If you specify `true` when it has been disabled it will return an error.
+DESCRIPTION
+  default     = true
+}
+
+variable "has_wiki" {
+  type        = bool
+  description = "Whether the wiki is enabled."
+  default     = true
+  nullable    = false
+}
+
+variable "is_template" {
+  type        = bool
+  description = "(Optional) Set to `true` to tell GitHub that this is a template repository."
+  default     = false
+}
+
+variable "allow_merge_commit" {
+  type        = bool
+  description = "Whether to allow merge commits on pull requests."
+  default     = true
+  nullable    = false
+}
+
+variable "allow_squash_merge" {
+  type        = bool
+  description = "Whether to allow squash merges on pull requests."
+  default     = true
+  nullable    = false
+}
+
+variable "allow_rebase_merge" {
+  type        = bool
+  description = "Whether to allow rebase merges on pull requests."
+  default     = true
+  nullable    = false
+}
+
+variable "allow_auto_merge" {
+  type        = bool
+  description = "Whether to allow auto-merge on pull requests."
+  default     = false
+  nullable    = false
+}
+
+variable "squash_merge_commit_title" {
+  type        = string
+  description = <<DESCRIPTION
+(Optional) Can be PR_TITLE or COMMIT_OR_PR_TITLE for a default squash merge commit title.
+Applicable only if allow_squash_merge is true.
+DESCRIPTION
+  default     = null
+  validation {
+    condition     = var.squash_merge_commit_title == null || (var.squash_merge_commit_title == "PR_TITLE" && var.allow_squash_merge == true) || (var.squash_merge_commit_title == "COMMIT_OR_PR_TITLE" && var.allow_squash_merge == true)
+    error_message = "The squash_merge_commit_title variable must be either 'PR_TITLE', 'COMMIT_OR_PR_TITLE' or null. If using 'PR_TITLE' or 'COMMIT_OR_PR_TITLE' then allow_squash_merge must be set to true."
+  }
+}
+
+variable "squash_merge_commit_message" {
+  type        = string
+  description = <<DESCRIPTION
+(Optional) Can be PR_BODY, COMMIT_MESSAGES, or BLANK for a default squash merge commit message.
+Applicable only if allow_squash_merge is true.
+DESCRIPTION
+  default     = null
+  validation {
+    condition     = var.squash_merge_commit_message == null || (var.squash_merge_commit_message == "PR_BODY" && var.allow_squash_merge == true) || (var.squash_merge_commit_message == "COMMIT_MESSAGES" && var.allow_squash_merge == true) || (var.squash_merge_commit_message == "BLANK" && var.allow_squash_merge == true)
+    error_message = "The squash_merge_commit_message variable must be either 'PR_BODY', 'COMMIT_MESSAGES', 'BLANK' or null. If using 'PR_BODY', 'COMMIT_MESSAGES' or 'BLANK' then allow_squash_merge must be set to true."
+  }
+}
+
+variable "merge_commit_title" {
+  type        = string
+  description = <<DESCRIPTION
+Can be PR_TITLE or MERGE_MESSAGE for a default merge commit title. Applicable only if allow_merge_commit is true.
+DESCRIPTION
+  default     = null
+  validation {
+    condition     = var.merge_commit_title == null || (var.merge_commit_title == "PR_TITLE" && var.allow_merge_commit == true) || (var.merge_commit_title == "MERGE_MESSAGE" && var.allow_merge_commit == true)
+    error_message = "The merge_commit_title variable must be either 'PR_TITLE', 'MERGE_MESSAGE' or null. If using 'PR_TITLE' or 'MERGE_MESSAGE' then allow_merge_commit must be set to true."
+  }
+}
+
+variable "merge_commit_message" {
+  type        = string
+  description = <<DESCRIPTION
+Can be PR_BODY, PR_TITLE, or BLANK for a default merge commit message. Applicable only if allow_merge_commit is true.
+DESCRIPTION
+  default     = null
+  validation {
+    condition     = var.merge_commit_message == null || (var.merge_commit_message == "PR_BODY" && var.allow_merge_commit == true) || (var.merge_commit_message == "PR_TITLE" && var.allow_merge_commit == true) || (var.merge_commit_message == "BLANK" && var.allow_merge_commit == true)
+    error_message = "The merge_commit_message variable must be either 'PR_BODY', 'PR_TITLE', 'BLANK' or null. If using 'PR_BODY', 'PR_TITLE' or 'BLANK' then allow_merge_commit must be set to true."
+  }
+}
+
+variable "delete_branch_on_merge" {
+  type        = bool
+  description = "Whether to delete head branches when pull requests are merged."
+  default     = false
+  nullable    = false
+}
+
+variable "web_commit_signoff_required" {
+  type        = bool
+  description = "Whether to require contributors to sign off on web-based commits."
+  default     = false
+  nullable    = false
+}
+variable "auto_init" {
+  type        = bool
+  description = "Whether to create an initial commit with empty README."
+  default     = false
+  nullable    = false
+}
+
+variable "gitignore_template" {
+  type        = string
+  description = <<DESCRIPTION
+The .gitignore template to apply. For a list of possible values, see the GitHub API documentation.
+Use the name of the template without the extension.
+For example, use `Haskell` for the `Haskell.gitignore` template.
+DESCRIPTION
+  default     = null
+  nullable    = true
+}
+
+variable "license_template" {
+  type        = string
+  description = <<DESCRIPTION
+The license template to apply. For a list of possible values, see the GitHub API documentation.
+Use the name of the template without the extension.
+For example, use `mit` for the `MIT.txt` template.
+DESCRIPTION
+  default     = null
+  nullable    = true
+}
+
+variable "archived" {
+  type        = bool
+  description = <<DESCRIPTION
+(Optional) Specifies if the repository should be archived. Defaults to false. **NOTE** Currently, the API does not support unarchiving.
+DESCRIPTION
+  default     = false
+  nullable    = false
+}
+
+variable "archive_on_destroy" {
+  type        = bool
+  description = "(Optional) Set to true to archive the repository instead of deleting on destroy."
+  default     = false
+  nullable    = false
+}
+
+variable "pages" {
   type = object({
-    key_vault_resource_id = string
-    key_name              = string
-    key_version           = optional(string, null)
-    user_assigned_identity = optional(object({
-      resource_id = string
+    source = optional(object({
+      branch = string
+      path   = optional(string, null)
+    }), null)
+    build_type = optional(string, null)
+    cname = optional(string, null)
+  })
+  description = <<DESCRIPTION
+(Optional) The repository's GitHub Pages configuration.
+
+`source` - (Optional) The source configuration for GitHub Pages.
+  `branch` - (Required) The branch to use for GitHub Pages.
+  `path` - (Optional) The path to use for GitHub Pages. Can be `/` for the root or `/docs` for the docs folder.
+`build_type` - (Optional) The build type to use for GitHub Pages. Can be `legacy` or `source`. If you use legacy as build type you need to set the option source.
+`cname` - (Optional) The custom domain name to use for GitHub Pages.
+DESCRIPTION
+  default     = null
+  nullable    = true
+}
+
+
+variable "security_and_analysis" {
+  type = object({
+    advanced_security = optional(object({
+      status = string # Can be "enabled" or "disabled"
+    }), null)
+    secret_scanning  = optional(object({
+      status = string # Can be "enabled" or "disabled"
+    }), null)
+    secret_scanning_push_protection = optional(object({
+      status = string # Can be "enabled" or "disabled"
     }), null)
   })
-  default     = null
   description = <<DESCRIPTION
-A map describing customer-managed keys to associate with the resource. This includes the following properties:
-- `key_vault_resource_id` - The resource ID of the Key Vault where the key is stored.
-- `key_name` - The name of the key.
-- `key_version` - (Optional) The version of the key. If not specified, the latest version is used.
-- `user_assigned_identity` - (Optional) An object representing a user-assigned identity with the following properties:
-  - `resource_id` - The resource ID of the user-assigned identity.
+(Optional) The repository's security and analysis settings.
+`advanced_security` - (Optional) The advanced security settings for the repository.
+  `status` - (Required) The status of advanced security. Can be `enabled` or `disabled`.
+`secret_scanning` - (Optional) The secret scanning settings for the repository.
+  `status` - (Required) The status of secret scanning. Can be `enabled` or `disabled`. If set to `enabled`, the repository's visibility must be `public` or `security_and_analysis[0].advanced_security[0].status` must also be set to `enabled`.
+`secret_scanning_push_protection` - (Optional) The secret scanning push protection settings for the repository.
+  `status` - (Required) The status of secret scanning push protection. Can be `enabled` or `disabled`. If set to `enabled`, the repository's visibility must be `public` or `security_and_analysis[0].advanced_security[0].status` must also be set to `enabled`.
 DESCRIPTION
+  default     = null
+  nullable    = true
 }
 
-variable "diagnostic_settings" {
-  type = map(object({
-    name                                     = optional(string, null)
-    log_categories                           = optional(set(string), [])
-    log_groups                               = optional(set(string), ["allLogs"])
-    metric_categories                        = optional(set(string), ["AllMetrics"])
-    log_analytics_destination_type           = optional(string, "Dedicated")
-    workspace_resource_id                    = optional(string, null)
-    storage_account_resource_id              = optional(string, null)
-    event_hub_authorization_rule_resource_id = optional(string, null)
-    event_hub_name                           = optional(string, null)
-    marketplace_partner_resource_id          = optional(string, null)
-  }))
-  default     = {}
+variable "template" {
+  type = object({
+    owner                = string
+    repository           = string
+    include_all_branches = optional(bool, false)
+  })
   description = <<DESCRIPTION
-A map of diagnostic settings to create on the Key Vault. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+(Optional) Use a template repository to create this resource.
 
-- `name` - (Optional) The name of the diagnostic setting. One will be generated if not set, however this will not be unique if you want to create multiple diagnostic setting resources.
-- `log_categories` - (Optional) A set of log categories to send to the log analytics workspace. Defaults to `[]`.
-- `log_groups` - (Optional) A set of log groups to send to the log analytics workspace. Defaults to `["allLogs"]`.
-- `metric_categories` - (Optional) A set of metric categories to send to the log analytics workspace. Defaults to `["AllMetrics"]`.
-- `log_analytics_destination_type` - (Optional) The destination type for the diagnostic setting. Possible values are `Dedicated` and `AzureDiagnostics`. Defaults to `Dedicated`.
-- `workspace_resource_id` - (Optional) The resource ID of the log analytics workspace to send logs and metrics to.
-- `storage_account_resource_id` - (Optional) The resource ID of the storage account to send logs and metrics to.
-- `event_hub_authorization_rule_resource_id` - (Optional) The resource ID of the event hub authorization rule to send logs and metrics to.
-- `event_hub_name` - (Optional) The name of the event hub. If none is specified, the default event hub will be selected.
-- `marketplace_partner_resource_id` - (Optional) The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic LogsLogs.
+`owner` - (Required) The owner of the template repository. The owner can be a user or an organization.
+`repository` - (Required) The name of the template repository.
+`include_all_branches` - (Optional) Whether to include all branches from the template repository. Defaults to `false`, which only includes the default branch.
 DESCRIPTION
-  nullable    = false
+  default     = null
+  nullable    = true
+}
 
-  validation {
-    condition     = alltrue([for _, v in var.diagnostic_settings : contains(["Dedicated", "AzureDiagnostics"], v.log_analytics_destination_type)])
-    error_message = "Log analytics destination type must be one of: 'Dedicated', 'AzureDiagnostics'."
-  }
-  validation {
-    condition = alltrue(
-      [
-        for _, v in var.diagnostic_settings :
-        v.workspace_resource_id != null || v.storage_account_resource_id != null || v.event_hub_authorization_rule_resource_id != null || v.marketplace_partner_resource_id != null
-      ]
-    )
-    error_message = "At least one of `workspace_resource_id`, `storage_account_resource_id`, `marketplace_partner_resource_id`, or `event_hub_authorization_rule_resource_id`, must be set."
-  }
+variable "vulnerability_alerts" {
+  type        = bool
+  description = "(Optional) Set to `true` to enable vulnerability alerts on the repository. Defaults to `false`."
+  default     = false
+  nullable    = false
+}
+
+variable "ignore_vulnerability_alerts_during_read" {
+  type        = bool
+  description = "(Optional) Set to `true` to not call the vulnerability alerts endpoint so the resource can also be used without admin permissions during read. Defaults to `false`."
+  default     = false
+  nullable    = false
+}
+
+variable "allow_update_branch" {
+  type        = bool
+  description = "(Optional) Set to true to always suggest updating pull request branches. Defaults to false."
+  default     = false
+  nullable    = false
 }
 
 variable "enable_telemetry" {
@@ -99,139 +307,4 @@ For more information see <https://aka.ms/avm/telemetryinfo>.
 If it is set to false, then no telemetry will be collected.
 DESCRIPTION
   nullable    = false
-}
-
-variable "lock" {
-  type = object({
-    kind = string
-    name = optional(string, null)
-  })
-  default     = null
-  description = <<DESCRIPTION
-Controls the Resource Lock configuration for this resource. The following properties can be specified:
-
-- `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
-- `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.
-DESCRIPTION
-
-  validation {
-    condition     = var.lock != null ? contains(["CanNotDelete", "ReadOnly"], var.lock.kind) : true
-    error_message = "The lock level must be one of: 'None', 'CanNotDelete', or 'ReadOnly'."
-  }
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "managed_identities" {
-  type = object({
-    system_assigned            = optional(bool, false)
-    user_assigned_resource_ids = optional(set(string), [])
-  })
-  default     = {}
-  description = <<DESCRIPTION
-Controls the Managed Identity configuration on this resource. The following properties can be specified:
-
-- `system_assigned` - (Optional) Specifies if the System Assigned Managed Identity should be enabled.
-- `user_assigned_resource_ids` - (Optional) Specifies a list of User Assigned Managed Identity resource IDs to be assigned to this resource.
-DESCRIPTION
-  nullable    = false
-}
-
-variable "private_endpoints" {
-  type = map(object({
-    name = optional(string, null)
-    role_assignments = optional(map(object({
-      role_definition_id_or_name             = string
-      principal_id                           = string
-      description                            = optional(string, null)
-      skip_service_principal_aad_check       = optional(bool, false)
-      condition                              = optional(string, null)
-      condition_version                      = optional(string, null)
-      delegated_managed_identity_resource_id = optional(string, null)
-    })), {})
-    lock = optional(object({
-      kind = string
-      name = optional(string, null)
-    }), null)
-    tags                                    = optional(map(string), null)
-    subnet_resource_id                      = string
-    private_dns_zone_group_name             = optional(string, "default")
-    private_dns_zone_resource_ids           = optional(set(string), [])
-    application_security_group_associations = optional(map(string), {})
-    private_service_connection_name         = optional(string, null)
-    network_interface_name                  = optional(string, null)
-    location                                = optional(string, null)
-    resource_group_name                     = optional(string, null)
-    ip_configurations = optional(map(object({
-      name               = string
-      private_ip_address = string
-    })), {})
-  }))
-  default     = {}
-  description = <<DESCRIPTION
-A map of private endpoints to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-
-- `name` - (Optional) The name of the private endpoint. One will be generated if not set.
-- `role_assignments` - (Optional) A map of role assignments to create on the private endpoint. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time. See `var.role_assignments` for more information.
-- `lock` - (Optional) The lock level to apply to the private endpoint. Default is `None`. Possible values are `None`, `CanNotDelete`, and `ReadOnly`.
-- `tags` - (Optional) A mapping of tags to assign to the private endpoint.
-- `subnet_resource_id` - The resource ID of the subnet to deploy the private endpoint in.
-- `private_dns_zone_group_name` - (Optional) The name of the private DNS zone group. One will be generated if not set.
-- `private_dns_zone_resource_ids` - (Optional) A set of resource IDs of private DNS zones to associate with the private endpoint. If not set, no zone groups will be created and the private endpoint will not be associated with any private DNS zones. DNS records must be managed external to this module.
-- `application_security_group_resource_ids` - (Optional) A map of resource IDs of application security groups to associate with the private endpoint. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-- `private_service_connection_name` - (Optional) The name of the private service connection. One will be generated if not set.
-- `network_interface_name` - (Optional) The name of the network interface. One will be generated if not set.
-- `location` - (Optional) The Azure location where the resources will be deployed. Defaults to the location of the resource group.
-- `resource_group_name` - (Optional) The resource group where the resources will be deployed. Defaults to the resource group of this resource.
-- `ip_configurations` - (Optional) A map of IP configurations to create on the private endpoint. If not specified the platform will create one. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-  - `name` - The name of the IP configuration.
-  - `private_ip_address` - The private IP address of the IP configuration.
-DESCRIPTION
-  nullable    = false
-}
-
-# This variable is used to determine if the private_dns_zone_group block should be included,
-# or if it is to be managed externally, e.g. using Azure Policy.
-# https://github.com/Azure/terraform-azurerm-avm-res-keyvault-vault/issues/32
-# Alternatively you can use AzAPI, which does not have this issue.
-variable "private_endpoints_manage_dns_zone_group" {
-  type        = bool
-  default     = true
-  description = "Whether to manage private DNS zone groups with this module. If set to false, you must manage private DNS zone groups externally, e.g. using Azure Policy."
-  nullable    = false
-}
-
-variable "role_assignments" {
-  type = map(object({
-    role_definition_id_or_name             = string
-    principal_id                           = string
-    description                            = optional(string, null)
-    skip_service_principal_aad_check       = optional(bool, false)
-    condition                              = optional(string, null)
-    condition_version                      = optional(string, null)
-    delegated_managed_identity_resource_id = optional(string, null)
-    principal_type                         = optional(string, null)
-  }))
-  default     = {}
-  description = <<DESCRIPTION
-A map of role assignments to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-
-- `role_definition_id_or_name` - The ID or name of the role definition to assign to the principal.
-- `principal_id` - The ID of the principal to assign the role to.
-- `description` - The description of the role assignment.
-- `skip_service_principal_aad_check` - If set to true, skips the Azure Active Directory check for the service principal in the tenant. Defaults to false.
-- `condition` - The condition which will be used to scope the role assignment.
-- `condition_version` - The version of the condition syntax. Valid values are '2.0'.
-- `delegated_managed_identity_resource_id` - The delegated Azure Resource Id which contains a Managed Identity. Changing this forces a new resource to be created.
-- `principal_type` - The type of the principal_id. Possible values are `User`, `Group` and `ServicePrincipal`. Changing this forces a new resource to be created. It is necessary to explicitly set this attribute when creating role assignments if the principal creating the assignment is constrained by ABAC rules that filters on the PrincipalType attribute.
-
-> Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.
-DESCRIPTION
-  nullable    = false
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "tags" {
-  type        = map(string)
-  default     = null
-  description = "(Optional) Tags of the resource."
 }

@@ -1,30 +1,50 @@
-# TODO: Replace this dummy resource azurerm_resource_group.TODO with your module resource
-resource "azurerm_resource_group" "TODO" {
-  location = var.location
-  name     = var.name # calling code must supply the name
-  tags     = var.tags
-}
+resource "github_repository" "this" {
+  for_each = local.github_repository
 
-# required AVM resources interfaces
-resource "azurerm_management_lock" "this" {
-  count = var.lock != null ? 1 : 0
+  name                        = each.value.name
+  allow_auto_merge            = each.value.allow_auto_merge
+  allow_merge_commit          = each.value.allow_merge_commit
+  allow_rebase_merge          = each.value.allow_rebase_merge
+  allow_squash_merge          = each.value.allow_squash_merge
+  allow_update_branch         = each.value.allow_update_branch
+  archive_on_destroy          = each.value.archive_on_destroy
+  archived                    = each.value.archived
+  auto_init                   = each.value.auto_init
+  gitignore_template          = each.value.gitignore_template
+  has_discussions             = each.value.has_discussions
+  has_downloads               = each.value.has_downloads
+  has_issues                  = each.value.has_issues
+  has_projects                = each.value.has_projects
+  has_wiki                    = each.value.has_wiki
+  homepage_url                = each.value.homepage_url
+  is_template                 = each.value.is_template
+  merge_commit_message        = each.value.merge_commit_message
+  merge_commit_title          = each.value.merge_commit_title
+  squash_merge_commit_message = each.value.squash_merge_commit_message
+  squash_merge_commit_title   = each.value.squash_merge_commit_title
+  topics                      = each.value.topics
+  visibility                  = each.value.visibility
 
-  lock_level = var.lock.kind
-  name       = coalesce(var.lock.name, "lock-${var.lock.kind}")
-  scope      = azurerm_resource_group.TODO.id # TODO: Replace with your azurerm resource name
-  notes      = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
-}
+  dynamic "template" {
+    for_each = each.value.template
+    content {
+      owner                = template.value.owner
+      repository           = template.value.repository
+      include_all_branches = template.value.include_all_branches
+    }
+  }
 
-resource "azurerm_role_assignment" "this" {
-  for_each = var.role_assignments
+  depends_on = [
+    data.github_user.onboarding
+  ]
 
-  principal_id                           = each.value.principal_id
-  scope                                  = azurerm_resource_group.TODO.id # TODO: Replace this dummy resource azurerm_resource_group.TODO with your module resource
-  condition                              = each.value.condition
-  condition_version                      = each.value.condition_version
-  delegated_managed_identity_resource_id = each.value.delegated_managed_identity_resource_id
-  principal_type                         = each.value.principal_type
-  role_definition_id                     = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? each.value.role_definition_id_or_name : null
-  role_definition_name                   = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? null : each.value.role_definition_id_or_name
-  skip_service_principal_aad_check       = each.value.skip_service_principal_aad_check
+  lifecycle {
+    # Added to ignore changes to the template block to avoid by any means that something goes wrong :-)
+    ignore_changes = [
+      template,
+      vulnerability_alerts,
+      topics,
+    ]
+  }
+
 }
