@@ -29,6 +29,7 @@ resource "github_repository_ruleset" "this" {
   }
 
   dynamic "rules" {
+    for_each = [1]
     content {
       creation                      = var.rules.creation
       update                        = var.rules.update
