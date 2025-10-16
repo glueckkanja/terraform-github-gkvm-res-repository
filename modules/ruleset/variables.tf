@@ -256,7 +256,7 @@ Conditions that must be met for the ruleset to apply. This object supports the f
   - `exclude` - (Required) A list of reference names that must be excluded.
 DESCRIPTION
   default     = null
-  nullable    = false
+  nullable    = true
 }
 
 variable "repository" {
