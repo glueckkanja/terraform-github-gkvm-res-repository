@@ -53,7 +53,7 @@ variable "rules" {
     deletion         = optional(bool, false)
     non_fast_forward = optional(bool, false)
     merge_queue = optional(object({
-      check_response_timeout_seconds    = optional(number, 60)
+      check_response_timeout_minutes    = optional(number, 60)
       grouping_strategy                 = optional(string, "ALLGREEN")
       max_entries_to_build              = optional(number, 5)
       max_entries_to_merge              = optional(number, 5)
@@ -163,7 +163,7 @@ Parameters to be used for the tag_name_pattern rule. This rule only applies to r
 
 Merges must be performed via a merge queue.
 
-- `check_response_timeout_seconds` - (Optional) Maximum time (in seconds) for a required status check to report a conclusion. After this much time has elapsed, checks that have not reported a conclusion will be assumed to have failed. Defaults to `60`.
+- `check_response_timeout_minutes` - (Optional) Maximum time (in minutes) for a required status check to report a conclusion. After this much time has elapsed, checks that have not reported a conclusion will be assumed to have failed. Defaults to `60`.
 - `grouping_strategy` - (Optional) When set to `ALLGREEN`, the merge commit created by merge queue for each PR in the group must pass all required checks to merge. When set to `HEADGREEN`, only the commit at the head of the merge group, i.e. the commit containing changes from all of the PRs in the group, must pass its required checks to merge. Can be one of: `ALLGREEN`, `HEADGREEN`. Defaults to `ALLGREEN`.
 - `max_entries_to_build` - (Optional) Limit the number of queued pull requests requesting checks and workflow runs at the same time. Defaults to `5`.
 - `max_entries_to_merge` - (Optional) The maximum number of PRs that will be merged together in a group. Defaults to `5`.

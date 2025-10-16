@@ -17,12 +17,9 @@ resource "github_repository_ruleset" "this" {
   dynamic "conditions" {
     for_each = var.conditions == null ? [] : [1]
     content {
-
-      dynamic "ref_name" {
-        content {
-          exclude = var.conditions.ref_name.exclude
-          include = var.conditions.ref_name.include
-        }
+      ref_name = {
+        exclude = var.conditions.ref_name.exclude
+        include = var.conditions.ref_name.include
       }
 
     }
@@ -82,7 +79,7 @@ resource "github_repository_ruleset" "this" {
       dynamic "merge_queue" {
         for_each = var.rules.merge_queue == null ? [] : [1]
         content {
-          check_response_timeout_seconds    = var.rules.merge_queue.check_response_timeout_seconds
+          check_response_timeout_minutes    = var.rules.merge_queue.check_response_timeout_minutes
           grouping_strategy                 = var.rules.merge_queue.grouping_strategy
           max_entries_to_build              = var.rules.merge_queue.max_entries_to_build
           max_entries_to_merge              = var.rules.merge_queue.max_entries_to_merge
