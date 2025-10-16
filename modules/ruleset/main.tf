@@ -94,7 +94,7 @@ resource "github_repository_ruleset" "this" {
         content {
           dismiss_stale_reviews_on_push     = var.rules.pull_request.dismiss_stale_reviews_on_push
           require_code_owner_review         = var.rules.pull_request.require_code_owner_review
-          required_last_push_approval       = var.rules.pull_request.required_last_push_approval
+          require_last_push_approval        = var.rules.pull_request.require_last_push_approval
           required_approving_review_count   = var.rules.pull_request.required_approving_review_count
           required_review_thread_resolution = var.rules.pull_request.required_review_thread_resolution
         }
@@ -114,8 +114,8 @@ resource "github_repository_ruleset" "this" {
           dynamic "required_check" {
             for_each = var.rules.required_status_checks.required_check
             content {
-              context = required_check.value.context
-              app_id  = required_check.value.app_id
+              context        = required_check.value.context
+              integration_id = required_check.value.integration_id
             }
           }
 
