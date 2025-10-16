@@ -316,8 +316,8 @@ variable "repository_rulesets" {
 
 variable "files" {
   type = list(object({
-    content    = string
-    file       = string
+    content = string
+    file    = string
 
     autocreate_branch               = optional(bool, false)
     autocreate_branch_source_branch = optional(string, null)
@@ -326,6 +326,7 @@ variable "files" {
     commit_author                   = optional(string, null)
     commit_email                    = optional(string, null)
     commit_message                  = optional(string, null)
+    overwrite_on_create             = optional(bool, true)
   }))
   description = "(Optional) A list of files to create or update in the repository."
   default     = []
