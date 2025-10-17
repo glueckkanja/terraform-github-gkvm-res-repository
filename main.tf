@@ -133,7 +133,7 @@ module "files" {
 
 module "secrets" {
   source   = "./modules/secrets"
-  for_each = { for idx, val in var.secrets : format("%s-%s", lower(val.typem), lower(val.name)) => val }
+  for_each = { for idx, val in var.secrets : format("%s-%s", lower(val.type), lower(val.name)) => val }
 
   repository      = github_repository.this.name
   name            = each.value.name
