@@ -19,11 +19,6 @@ variable "encrypted_value" {
   type        = string
   description = "(Optional) Encrypted value of the secret using the GitHub public key in Base64 format. Only valid if 'is_variable' is `false`."
   nullable    = true
-
-  validation {
-    condition     = var.encrypted_value != null && var.is_variable == false
-    error_message = "The 'encrypted_value' must be provided when 'is_variable' is false."
-  }
 }
 
 variable "plaintext_value" {
