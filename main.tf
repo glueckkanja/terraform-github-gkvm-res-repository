@@ -130,3 +130,20 @@ module "files" {
     github_repository.this
   ]
 }
+
+module "secrets" {
+  source   = "./modules/secrets"
+  for_each = { for idx, val in var.secrets : format("%s-%s", lower(val.typem), lower(val.name)) => val }
+
+  repository      = github_repository.this.name
+  name            = each.value.name
+  encrypted_value = each.value.encrypted_value
+  plaintext_value = each.value.plaintext_value
+  type            = each.value.type
+  is_variable     = each.value.is_variable
+
+  depends_on = [
+    github_repository.this
+  ]
+}
+

@@ -333,6 +333,19 @@ variable "files" {
   nullable    = false
 }
 
+variable "secrets" {
+  type        = list(object({
+    name            = string
+    encrypted_value = optional(string, null)
+    plaintext_value = optional(string, null)
+    type            = optional(string, "actions")
+    is_variable     = optional(bool, false)
+  }))
+  description = "(Optional) A list of secrets or variables to create in the repository."
+  default     = []
+  nullable    = false
+}
+
 variable "enable_telemetry" {
   type        = bool
   default     = true
