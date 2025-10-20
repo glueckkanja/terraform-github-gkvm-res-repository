@@ -27,12 +27,12 @@ variable "content" {
   nullable    = false
 }
 
-variable "branch" {
-  type        = string
-  description = "(Optional) The branch to commit the file to. Default: the repository's default branch."
-  default     = null
-  nullable    = true
-}
+# variable "branch" {
+#   type        = string
+#   description = "(Optional) The branch to commit the file to. Default: the repository's default branch."
+#   default     = null
+#   nullable    = true
+# }
 
 variable "commit_author" {
   type = string

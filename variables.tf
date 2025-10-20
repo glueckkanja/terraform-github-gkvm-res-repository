@@ -322,7 +322,7 @@ variable "files" {
     autocreate_branch               = optional(bool, false)
     autocreate_branch_source_branch = optional(string, null)
     autocreate_branch_source_sha    = optional(string, null)
-    branch                          = optional(string, null)
+    # branch                          = optional(string, null)
     commit_author                   = optional(string, null)
     commit_email                    = optional(string, null)
     commit_message                  = optional(string, null)
