@@ -121,7 +121,7 @@ module "files" {
   autocreate_branch               = each.value.autocreate_branch
   autocreate_branch_source_branch = each.value.autocreate_branch_source_branch
   autocreate_branch_source_sha    = each.value.autocreate_branch_source_sha
-  branch                          = each.value.branch
+  # branch                          = each.value.branch
   commit_author                   = each.value.commit_author
   commit_email                    = each.value.commit_email
   commit_message                  = each.value.commit_message
