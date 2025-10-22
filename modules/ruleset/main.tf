@@ -150,4 +150,10 @@ resource "github_repository_ruleset" "this" {
       }
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      enforcement,
+    ]
+  }
 }
