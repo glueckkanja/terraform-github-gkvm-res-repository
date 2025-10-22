@@ -15,24 +15,133 @@ The following requirements are needed by this module:
 
 - <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.6)
 
+- <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
+
+- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
+
 ## Resources
 
 The following resources are used by this module:
 
+- [github_branch_default.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_default) (resource)
 - [github_repository.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) (resource)
-- [modtm_telemetry.telemetry](https://registry.terraform.io/providers/hashicorp/modtm/latest/docs/resources/telemetry) (resource)
+- [modtm_telemetry.telemetry](https://registry.terraform.io/providers/azure/modtm/latest/docs/resources/telemetry) (resource)
 - [random_uuid.telemetry](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)
 - [azapi_client_config.telemetry](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
-- [modtm_module_source.telemetry](https://registry.terraform.io/providers/hashicorp/modtm/latest/docs/data-sources/module_source) (data source)
+- [modtm_module_source.telemetry](https://registry.terraform.io/providers/azure/modtm/latest/docs/data-sources/module_source) (data source)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
 
-No required inputs.
+The following input variables are required:
+
+### <a name="input_name"></a> [name](#input\_name)
+
+Description: The name of the repository.
+
+Type: `string`
 
 ## Optional Inputs
 
 The following input variables are optional (have default values):
+
+### <a name="input_allow_auto_merge"></a> [allow\_auto\_merge](#input\_allow\_auto\_merge)
+
+Description: Whether to allow auto-merge on pull requests.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_allow_merge_commit"></a> [allow\_merge\_commit](#input\_allow\_merge\_commit)
+
+Description: Whether to allow merge commits on pull requests.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_allow_rebase_merge"></a> [allow\_rebase\_merge](#input\_allow\_rebase\_merge)
+
+Description: Whether to allow rebase merges on pull requests.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_allow_squash_merge"></a> [allow\_squash\_merge](#input\_allow\_squash\_merge)
+
+Description: Whether to allow squash merges on pull requests.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_allow_update_branch"></a> [allow\_update\_branch](#input\_allow\_update\_branch)
+
+Description: (Optional) Set to true to always suggest updating pull request branches. Defaults to false.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_archive_on_destroy"></a> [archive\_on\_destroy](#input\_archive\_on\_destroy)
+
+Description: (Optional) Set to true to archive the repository instead of deleting on destroy.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_archived"></a> [archived](#input\_archived)
+
+Description: (Optional) Specifies if the repository should be archived. Defaults to false. **NOTE** Currently, the API does not support unarchiving.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_auto_init"></a> [auto\_init](#input\_auto\_init)
+
+Description: Whether to create an initial commit with empty README.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_default_branch"></a> [default\_branch](#input\_default\_branch)
+
+Description: This setting allows you to set the default branch. Set this to `null` to leave the default branch unchanged.
+
+`branch` - (Required) The name of the branch to set as the default branch.
+`rename` - (Optional) Whether to rename the default branch if it already exists. Defaults to `false`.
+
+Type:
+
+```hcl
+object({
+    branch = string
+    rename = optional(bool, false)
+  })
+```
+
+Default: `null`
+
+### <a name="input_delete_branch_on_merge"></a> [delete\_branch\_on\_merge](#input\_delete\_branch\_on\_merge)
+
+Description: Whether to delete head branches when pull requests are merged.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_description"></a> [description](#input\_description)
+
+Description: A short description of the repository.
+
+Type: `string`
+
+Default: `null`
 
 ### <a name="input_enable_telemetry"></a> [enable\_telemetry](#input\_enable\_telemetry)
 
@@ -44,13 +153,292 @@ Type: `bool`
 
 Default: `true`
 
+### <a name="input_files"></a> [files](#input\_files)
+
+Description: (Optional) A list of files to create or update in the repository.
+
+Type:
+
+```hcl
+list(object({
+    content = string
+    file    = string
+
+    autocreate_branch               = optional(bool, false)
+    autocreate_branch_source_branch = optional(string, null)
+    autocreate_branch_source_sha    = optional(string, null)
+    # branch                          = optional(string, null)
+    commit_author       = optional(string, null)
+    commit_email        = optional(string, null)
+    commit_message      = optional(string, null)
+    overwrite_on_create = optional(bool, true)
+  }))
+```
+
+Default: `[]`
+
+### <a name="input_gitignore_template"></a> [gitignore\_template](#input\_gitignore\_template)
+
+Description: The .gitignore template to apply. For a list of possible values, see the GitHub API documentation.  
+Use the name of the template without the extension.  
+For example, use `Haskell` for the `Haskell.gitignore` template.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_has_discussions"></a> [has\_discussions](#input\_has\_discussions)
+
+Description: (Optional) Set to `true` to enable GitHub Discussions on the repository. Defaults to `false`.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_has_issues"></a> [has\_issues](#input\_has\_issues)
+
+Description: Whether issues are enabled.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_has_projects"></a> [has\_projects](#input\_has\_projects)
+
+Description: (Optional) Set to `true` to enable the GitHub Projects features on the repository.  
+Per the GitHub documentation when in an organization that has disabled repository projects it will default to `false` and will otherwise default to `true`.  
+If you specify `true` when it has been disabled it will return an error.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_has_wiki"></a> [has\_wiki](#input\_has\_wiki)
+
+Description: Whether the wiki is enabled.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_homepage_url"></a> [homepage\_url](#input\_homepage\_url)
+
+Description: A URL with more information about the repository.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_ignore_vulnerability_alerts_during_read"></a> [ignore\_vulnerability\_alerts\_during\_read](#input\_ignore\_vulnerability\_alerts\_during\_read)
+
+Description: (Optional) Set to `true` to not call the vulnerability alerts endpoint so the resource can also be used without admin permissions during read. Defaults to `false`.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_is_template"></a> [is\_template](#input\_is\_template)
+
+Description: (Optional) Set to `true` to tell GitHub that this is a template repository.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_license_template"></a> [license\_template](#input\_license\_template)
+
+Description: The license template to apply. For a list of possible values, see the GitHub API documentation.  
+Use the name of the template without the extension.  
+For example, use `mit` for the `MIT.txt` template.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_merge_commit_message"></a> [merge\_commit\_message](#input\_merge\_commit\_message)
+
+Description: Can be PR\_BODY, PR\_TITLE, or BLANK for a default merge commit message. Applicable only if allow\_merge\_commit is true.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_merge_commit_title"></a> [merge\_commit\_title](#input\_merge\_commit\_title)
+
+Description: Can be PR\_TITLE or MERGE\_MESSAGE for a default merge commit title. Applicable only if allow\_merge\_commit is true.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_pages"></a> [pages](#input\_pages)
+
+Description: (Optional) The repository's GitHub Pages configuration. Set to `null` to disable GitHub Pages.  
+If omitted, GitHub Pages will not be configured.
+
+`source` - (Optional) The source configuration for GitHub Pages.
+  `branch` - (Required) The branch to use for GitHub Pages.
+  `path` - (Optional) The path to use for GitHub Pages. Can be `/` for the root or `/docs` for the docs folder.
+`build_type` - (Optional) The build type to use for GitHub Pages. Can be `legacy` or `source`. If you use legacy as build type you need to set the option source.
+`cname` - (Optional) The custom domain name to use for GitHub Pages.
+
+Type:
+
+```hcl
+object({
+    source = optional(object({
+      branch = string
+      path   = optional(string, null)
+    }), null)
+    build_type = optional(string, null)
+    cname      = optional(string, null)
+  })
+```
+
+Default: `null`
+
+### <a name="input_repository_rulesets"></a> [repository\_rulesets](#input\_repository\_rulesets)
+
+Description: (Optional) A list of rulesets to apply to the repository.
+
+Type: `list(any)`
+
+Default: `[]`
+
+### <a name="input_secrets"></a> [secrets](#input\_secrets)
+
+Description: (Optional) A list of secrets or variables to create in the repository.
+
+Type:
+
+```hcl
+list(object({
+    name            = string
+    encrypted_value = optional(string, null)
+    plaintext_value = optional(string, null)
+    type            = optional(string, "actions")
+    is_variable     = optional(bool, false)
+  }))
+```
+
+Default: `[]`
+
+### <a name="input_security_and_analysis"></a> [security\_and\_analysis](#input\_security\_and\_analysis)
+
+Description: (Optional) The repository's security and analysis settings.
+`advanced_security` - (Optional) The advanced security settings for the repository.
+  `status` - (Required) The status of advanced security. Can be `enabled` or `disabled`.
+`secret_scanning` - (Optional) The secret scanning settings for the repository.
+  `status` - (Required) The status of secret scanning. Can be `enabled` or `disabled`. If set to `enabled`, the repository's visibility must be `public` or `security_and_analysis[0].advanced_security[0].status` must also be set to `enabled`.
+`secret_scanning_push_protection` - (Optional) The secret scanning push protection settings for the repository.
+  `status` - (Required) The status of secret scanning push protection. Can be `enabled` or `disabled`. If set to `enabled`, the repository's visibility must be `public` or `security_and_analysis[0].advanced_security[0].status` must also be set to `enabled`.
+
+Type:
+
+```hcl
+object({
+    advanced_security = optional(object({
+      status = string # Can be "enabled" or "disabled"
+    }), null)
+    secret_scanning = optional(object({
+      status = string # Can be "enabled" or "disabled"
+    }), null)
+    secret_scanning_push_protection = optional(object({
+      status = string # Can be "enabled" or "disabled"
+    }), null)
+  })
+```
+
+Default: `null`
+
+### <a name="input_squash_merge_commit_message"></a> [squash\_merge\_commit\_message](#input\_squash\_merge\_commit\_message)
+
+Description: (Optional) Can be PR\_BODY, COMMIT\_MESSAGES, or BLANK for a default squash merge commit message.  
+Applicable only if allow\_squash\_merge is true.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_squash_merge_commit_title"></a> [squash\_merge\_commit\_title](#input\_squash\_merge\_commit\_title)
+
+Description: (Optional) Can be PR\_TITLE or COMMIT\_OR\_PR\_TITLE for a default squash merge commit title.  
+Applicable only if allow\_squash\_merge is true.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_template"></a> [template](#input\_template)
+
+Description: (Optional) Use a template repository to create this resource.
+
+`owner` - (Required) The owner of the template repository. The owner can be a user or an organization.
+`repository` - (Required) The name of the template repository.
+`include_all_branches` - (Optional) Whether to include all branches from the template repository. Defaults to `false`, which only includes the default branch.
+
+Type:
+
+```hcl
+object({
+    owner                = string
+    repository           = string
+    include_all_branches = optional(bool, false)
+  })
+```
+
+Default: `null`
+
+### <a name="input_visibility"></a> [visibility](#input\_visibility)
+
+Description: Can be `public` or `private`. If your organization is associated with an enterprise account using GitHub Enterprise Cloud or GitHub Enterprise Server 2.20+,  
+visibility can also be `internal`. The visibility parameter overrides the private parameter.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_vulnerability_alerts"></a> [vulnerability\_alerts](#input\_vulnerability\_alerts)
+
+Description: (Optional) Set to `true` to enable vulnerability alerts on the repository. Defaults to `false`.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_web_commit_signoff_required"></a> [web\_commit\_signoff\_required](#input\_web\_commit\_signoff\_required)
+
+Description: Whether to require contributors to sign off on web-based commits.
+
+Type: `bool`
+
+Default: `false`
+
 ## Outputs
 
 No outputs.
 
 ## Modules
 
-No modules.
+The following Modules are called:
+
+### <a name="module_files"></a> [files](#module\_files)
+
+Source: ./modules/file
+
+Version:
+
+### <a name="module_rulesets"></a> [rulesets](#module\_rulesets)
+
+Source: ./modules/ruleset
+
+Version:
+
+### <a name="module_secrets"></a> [secrets](#module\_secrets)
+
+Source: ./modules/secrets
+
+Version:
 
 <!-- markdownlint-disable-next-line MD041 -->
 ## Data Collection

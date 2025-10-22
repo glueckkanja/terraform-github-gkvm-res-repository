@@ -95,14 +95,12 @@ module "rulesets" {
   source   = "./modules/ruleset"
   for_each = { for idx, val in var.repository_rulesets : val.name => val }
 
-  enforcement = each.value.enforcement
-  name        = each.value.name
-
-  target     = each.value.target
-  repository = github_repository.this.name
-
+  enforcement   = each.value.enforcement
+  name          = each.value.name
+  target        = each.value.target
   bypass_actors = each.value.bypass_actors
   conditions    = each.value.conditions
+  repository    = github_repository.this.name
   rules         = each.value.rules
 
   depends_on = [
@@ -114,17 +112,16 @@ module "files" {
   source   = "./modules/file"
   for_each = { for idx, val in var.files : val.file => val }
 
-  content    = each.value.content
-  file       = each.value.file
-  repository = github_repository.this.name
-
+  file                            = each.value.file
+  repository                      = github_repository.this.name
   autocreate_branch               = each.value.autocreate_branch
   autocreate_branch_source_branch = each.value.autocreate_branch_source_branch
   autocreate_branch_source_sha    = each.value.autocreate_branch_source_sha
   # branch                          = each.value.branch
-  commit_author                   = each.value.commit_author
-  commit_email                    = each.value.commit_email
-  commit_message                  = each.value.commit_message
+  commit_author  = each.value.commit_author
+  commit_email   = each.value.commit_email
+  commit_message = each.value.commit_message
+  content        = each.value.content
 
   depends_on = [
     github_repository.this
@@ -135,12 +132,12 @@ module "secrets" {
   source   = "./modules/secrets"
   for_each = { for idx, val in var.secrets : format("%s-%s", lower(val.type), lower(val.name)) => val }
 
-  repository      = github_repository.this.name
-  name            = each.value.name
   encrypted_value = each.value.encrypted_value
+  name            = each.value.name
   plaintext_value = each.value.plaintext_value
-  type            = each.value.type
+  repository      = github_repository.this.name
   is_variable     = each.value.is_variable
+  type            = each.value.type
 
   depends_on = [
     github_repository.this

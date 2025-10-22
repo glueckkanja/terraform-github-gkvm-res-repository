@@ -2,6 +2,5 @@
   "chat.agent.maxRequests": 500,
   "chat.math.enabled": true,
   "chat.todoListTool.enabled": true,
-  "github.copilot.chat.agent.thinkingTool": true,
-  "makefile.configureOnOpen": false
+  "github.copilot.chat.agent.thinkingTool": true
 }

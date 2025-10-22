@@ -22,6 +22,59 @@ variable "name" {
   }
 }
 
+variable "target" {
+  type        = string
+  description = <<DESCRIPTION
+The type of ref that the ruleset applies to. Can be one of: `branch`, `tag`.
+DESCRIPTION
+  nullable    = false
+
+  validation {
+    condition     = var.target == "branch" || var.target == "tag"
+    error_message = "Target must be one of 'branch' or 'tag'."
+  }
+}
+
+variable "bypass_actors" {
+  type = list(object({
+    actor_id    = number
+    actor_type  = string
+    bypass_mode = string
+  }))
+  default     = []
+  description = <<DESCRIPTION
+Actors that can bypass the ruleset. This object supports the following attributes:
+
+- `actor_id` - (Required) The ID of the actor that can bypass the ruleset. For a user, this is their user ID. For a team, this is the team's node ID. For an app, this is the app's ID.
+- `actor_type` - (Required) The type of actor that can bypass the ruleset. Can be one of: `RepositoryRole`, `Team`, `Integration` and `OrganizationAdministrator`.
+- `bypass_mode` - (Required) The mode in which the actor can bypass the ruleset. Can be one of: `always`, `pull_request`.
+DESCRIPTION
+  nullable    = false
+}
+
+variable "conditions" {
+  type = object({
+    ref_name = object({
+      include = list(string)
+      exclude = list(string)
+    })
+  })
+  default     = null
+  description = <<DESCRIPTION
+Conditions that must be met for the ruleset to apply. This object supports the following attributes:
+
+- `ref_name` - (Required) The name of the reference (branch or tag) to which the ruleset applies. This object supports the following attributes:
+  - `include` - (Required) A list of reference names that must be included.
+  - `exclude` - (Required) A list of reference names that must be excluded.
+DESCRIPTION
+}
+
+variable "repository" {
+  type        = string
+  default     = null
+  description = "The name of the repository to which the ruleset will be applied."
+}
+
 variable "rules" {
   type = object({
     branch_name_pattern = optional(object({
@@ -96,6 +149,7 @@ variable "rules" {
     }), null)
     update_allows_fetch_and_merge = optional(bool, false)
   })
+  default     = {}
   description = <<DESCRIPTION
 Rules within the ruleset. This object supports the following attributes:
 
@@ -207,61 +261,5 @@ Choose which tools must provide code scanning results before the reference is up
   - `tool` - (Required) The name of a code scanning tool.
 
 DESCRIPTION
-  default     = {}
   nullable    = false
-}
-
-variable "target" {
-  type        = string
-  description = <<DESCRIPTION
-The type of ref that the ruleset applies to. Can be one of: `branch`, `tag`.
-DESCRIPTION
-  nullable    = false
-
-  validation {
-    condition     = var.target == "branch" || var.target == "tag"
-    error_message = "Target must be one of 'branch' or 'tag'."
-  }
-}
-
-variable "bypass_actors" {
-  type = list(object({
-    actor_id    = number
-    actor_type  = string
-    bypass_mode = string
-  }))
-  description = <<DESCRIPTION
-Actors that can bypass the ruleset. This object supports the following attributes:
-
-- `actor_id` - (Required) The ID of the actor that can bypass the ruleset. For a user, this is their user ID. For a team, this is the team's node ID. For an app, this is the app's ID.
-- `actor_type` - (Required) The type of actor that can bypass the ruleset. Can be one of: `RepositoryRole`, `Team`, `Integration` and `OrganizationAdministrator`.
-- `bypass_mode` - (Required) The mode in which the actor can bypass the ruleset. Can be one of: `always`, `pull_request`.
-DESCRIPTION
-  default     = []
-  nullable    = false
-}
-
-variable "conditions" {
-  type = object({
-    ref_name = object({
-      include = list(string)
-      exclude = list(string)
-    })
-  })
-  description = <<DESCRIPTION
-Conditions that must be met for the ruleset to apply. This object supports the following attributes:
-
-- `ref_name` - (Required) The name of the reference (branch or tag) to which the ruleset applies. This object supports the following attributes:
-  - `include` - (Required) A list of reference names that must be included.
-  - `exclude` - (Required) A list of reference names that must be excluded.
-DESCRIPTION
-  default     = null
-  nullable    = true
-}
-
-variable "repository" {
-  type        = string
-  description = "The name of the repository to which the ruleset will be applied."
-  default     = null
-  nullable    = true
 }
