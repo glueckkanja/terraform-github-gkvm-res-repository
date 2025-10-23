@@ -85,7 +85,7 @@ resource "github_repository" "this" {
   lifecycle {
     ignore_changes = [
       template,
-     ]
+    ]
   }
 }
 
