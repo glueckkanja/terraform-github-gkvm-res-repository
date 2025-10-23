@@ -81,6 +81,12 @@ resource "github_repository" "this" {
       include_all_branches = var.template.include_all_branches
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      template,
+     ]
+  }
 }
 
 resource "github_branch_default" "this" {
