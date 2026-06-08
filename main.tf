@@ -17,7 +17,6 @@ resource "github_repository" "this" {
   has_projects                            = var.has_projects
   has_wiki                                = var.has_wiki
   homepage_url                            = var.homepage_url
-  ignore_vulnerability_alerts_during_read = var.ignore_vulnerability_alerts_during_read
   is_template                             = var.is_template
   license_template                        = var.license_template
   merge_commit_message                    = var.merge_commit_message
