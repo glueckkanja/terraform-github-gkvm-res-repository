@@ -1,9 +1,26 @@
 ---
-description: ' Azure Verified Modules (AVM) and Terraform'
+description: 'This repository (a GitHub resource module), plus Azure Verified Modules (AVM) and Terraform'
 applyTo: '**/*.terraform, **/*.tf, **/*.tfvars, **/*.tfstate, **/*.tflint.hcl, **/*.tf.json, **/*.tfvars.json'
 ---
 
+# This repository
+
+`terraform-github-gkvm-res-repository` is a **GitHub** resource module published by Glück & Kanja. It manages GitHub repositories and nothing else.
+
+Read this before applying anything else in this file:
+
+- **`integrations/github` is the only provider.** The module does not require, configure, or authenticate against Azure. Do not add `azapi`, `azurerm`, `modtm` or `random` provider requirements.
+- **There is no telemetry and no `enable_telemetry` variable.** Both were removed, because the AVM telemetry stack made the module unusable without Azure credentials and reported Azure tenant identifiers that have no bearing on a GitHub repository. Do not reintroduce either.
+- **This is not a Microsoft-published AVM module.** It borrows the AVM repository scaffolding — the `avm` script, the CI workflows, the terraform-docs layout — but it is not indexed in the AVM catalogue and is not bound by AVM telemetry requirements.
+- **`for_each` keys are state addresses.** This module is consumed across many states. Changing a `for_each` key expression forces a destroy and recreate of every affected resource in every state, and `moved` blocks cannot fix keys computed from a variable. Treat key expressions as immutable unless you are deliberately shipping a migration.
+
+The AVM material below is retained because it is useful when **consuming** Azure AVM modules from other code. It describes those modules, not this one — so its `enable_telemetry` guidance in particular does not apply here.
+
+The build and validation commands, however, do apply to this repository. See "Custom Instructions for GitHub Copilot Agents" and "Validation Requirements".
+
 # Azure Verified Modules (AVM) Terraform
+
+> **Scope:** this section onward is about consuming Azure AVM modules published by Microsoft. It does not describe this repository.
 
 ## Overview
 
@@ -120,7 +137,7 @@ module "storage_account" {
 - ✅ **Always** pin module versions
 - ✅ **Start** with official examples from module documentation
 - ✅ **Review** all inputs and outputs before implementation
-- ✅ **Enable** telemetry: `enable_telemetry = true`
+- ✅ **Enable** telemetry: `enable_telemetry = true` — *Azure AVM modules only. This repository has no such variable; see "This repository" above.*
 - ✅ **Use** AVM utility modules for common patterns
 
 ### Code Quality
