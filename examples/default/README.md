@@ -11,7 +11,7 @@ terraform {
   required_providers {
     github = {
       source  = "integrations/github"
-      version = "~> 6.6"
+      version = "~> 6.13"
     }
     modtm = {
       source  = "azure/modtm"
@@ -37,7 +37,6 @@ module "repository" {
   }
   description      = "This is an example repository."
   enable_telemetry = var.enable_telemetry
-  has_downloads    = true
   has_issues       = true
   has_projects     = true
   has_wiki         = true
@@ -53,7 +52,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (~> 1.5)
 
-- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.6)
+- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 

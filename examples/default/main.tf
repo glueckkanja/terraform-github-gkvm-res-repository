@@ -4,7 +4,7 @@ terraform {
   required_providers {
     github = {
       source  = "integrations/github"
-      version = "~> 6.6"
+      version = "~> 6.13"
     }
     modtm = {
       source  = "azure/modtm"
@@ -30,7 +30,6 @@ module "repository" {
   }
   description      = "This is an example repository."
   enable_telemetry = var.enable_telemetry
-  has_downloads    = true
   has_issues       = true
   has_projects     = true
   has_wiki         = true

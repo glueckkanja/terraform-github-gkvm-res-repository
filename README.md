@@ -13,7 +13,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
-- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.6)
+- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
@@ -229,14 +229,6 @@ Type: `string`
 
 Default: `null`
 
-### <a name="input_ignore_vulnerability_alerts_during_read"></a> [ignore\_vulnerability\_alerts\_during\_read](#input\_ignore\_vulnerability\_alerts\_during\_read)
-
-Description: (Optional) Set to `true` to not call the vulnerability alerts endpoint so the resource can also be used without admin permissions during read. Defaults to `false`.
-
-Type: `bool`
-
-Default: `false`
-
 ### <a name="input_is_template"></a> [is\_template](#input\_is\_template)
 
 Description: (Optional) Set to `true` to tell GitHub that this is a template repository.
@@ -299,15 +291,125 @@ Default: `null`
 
 ### <a name="input_repository_rulesets"></a> [repository\_rulesets](#input\_repository\_rulesets)
 
-Description: (Optional) A list of rulesets to apply to the repository.
+Description: (Optional) A list of rulesets to apply to the repository. Each object supports the following attributes:
 
-Type: `list(any)`
+- `enforcement` - (Required) Possible values are `disabled`, `active`, `evaluate`. Note: `evaluate` is only supported for owners of type organization.
+- `name` - (Required) The name of the ruleset.
+- `target` - (Required) The type of ref that the ruleset applies to. Can be one of: `branch`, `tag`.
+- `bypass_actors` - (Optional) Actors that can bypass the ruleset. Defaults to `[]`.
+  - `actor_id` - (Required) The ID of the actor that can bypass the ruleset. For a user, this is their user ID. For a team, this is the team's node ID. For an app, this is the app's ID.
+  - `actor_type` - (Required) Can be one of: `RepositoryRole`, `Team`, `Integration` and `OrganizationAdministrator`.
+  - `bypass_mode` - (Required) Can be one of: `always`, `pull_request`.
+- `conditions` - (Optional) Conditions that must be met for the ruleset to apply. Defaults to `null`.
+  - `ref_name.include` - (Required) A list of reference names that must be included.
+  - `ref_name.exclude` - (Required) A list of reference names that must be excluded.
+- `rules` - (Optional) Rules within the ruleset. Defaults to `{}`. See the `ruleset` submodule documentation for the full attribute reference.
+
+Type:
+
+```hcl
+list(object({
+    enforcement = string
+    name        = string
+    target      = string
+    bypass_actors = optional(list(object({
+      actor_id    = number
+      actor_type  = string
+      bypass_mode = string
+    })), [])
+    conditions = optional(object({
+      ref_name = object({
+        include = list(string)
+        exclude = list(string)
+      })
+    }), null)
+    rules = optional(object({
+      branch_name_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      commit_author_email_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      commit_message_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      committer_email_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      creation         = optional(bool, false)
+      update           = optional(bool, false)
+      deletion         = optional(bool, false)
+      non_fast_forward = optional(bool, false)
+      merge_queue = optional(object({
+        check_response_timeout_minutes    = optional(number, 60)
+        grouping_strategy                 = optional(string, "ALLGREEN")
+        max_entries_to_build              = optional(number, 5)
+        max_entries_to_merge              = optional(number, 5)
+        merge_method                      = optional(string, "MERGE")
+        min_entries_to_merge              = optional(number, 1)
+        min_entries_to_merge_wait_minutes = optional(number, 5)
+      }), null)
+      pull_request = optional(object({
+        dismiss_stale_reviews_on_push     = optional(bool, false)
+        require_code_owner_review         = optional(bool, false)
+        require_last_push_approval        = optional(bool, false)
+        required_approving_review_count   = optional(number, 0)
+        required_review_thread_resolution = optional(bool, false)
+      }), null)
+      required_deployments = optional(object({
+        required_deployment_environments = list(string)
+      }), null)
+      required_linear_history = optional(bool, false)
+      required_signatures     = optional(bool, false)
+      required_status_checks = optional(object({
+        required_check = list(object({
+          context        = string
+          integration_id = optional(number, null)
+        }))
+        strict_required_status_checks_policy = optional(bool, false)
+        do_not_enforce_on_create             = optional(bool, false)
+      }), null)
+      tag_name_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      required_code_scanning = optional(object({
+        required_code_scanning_tool = list(object({
+          alerts_threshold          = string
+          security_alerts_threshold = string
+          tool                      = string
+        }))
+      }), null)
+      update_allows_fetch_and_merge = optional(bool, false)
+    }), {})
+  }))
+```
 
 Default: `[]`
 
 ### <a name="input_secrets"></a> [secrets](#input\_secrets)
 
 Description: (Optional) A list of secrets or variables to create in the repository.
+
+**NOTE:** entries are keyed by `type` and `name`, case-insensitively. Two entries  
+that share a `type` and a case-insensitive `name` are rejected, even when one is a  
+secret and the other an Actions variable. GitHub itself treats secrets and variables  
+as separate namespaces, so if you need `FOO` as both, declare the variable with a  
+separate `github_actions_variable` resource outside this module.
 
 Type:
 
@@ -416,7 +518,68 @@ Default: `false`
 
 ## Outputs
 
-No outputs.
+The following outputs are exported:
+
+### <a name="output_default_branch"></a> [default\_branch](#output\_default\_branch)
+
+Description: The name of the default branch of the repository, or `null` when the default branch is not managed by this module.
+
+### <a name="output_files"></a> [files](#output\_files)
+
+Description: A map of the created repository files, keyed by file path.
+
+### <a name="output_full_name"></a> [full\_name](#output\_full\_name)
+
+Description: The full name of the repository, in the form `owner/name`.
+
+### <a name="output_git_clone_url"></a> [git\_clone\_url](#output\_git\_clone\_url)
+
+Description: The Git protocol clone URL of the repository.
+
+### <a name="output_html_url"></a> [html\_url](#output\_html\_url)
+
+Description: The URL of the repository on GitHub.
+
+### <a name="output_http_clone_url"></a> [http\_clone\_url](#output\_http\_clone\_url)
+
+Description: The HTTPS clone URL of the repository.
+
+### <a name="output_name"></a> [name](#output\_name)
+
+Description: The name of the repository.
+
+### <a name="output_node_id"></a> [node\_id](#output\_node\_id)
+
+Description: The GraphQL global node ID of the repository, for use with the v4 API.
+
+### <a name="output_repo_id"></a> [repo\_id](#output\_repo\_id)
+
+Description: The numeric GitHub ID of the repository.
+
+### <a name="output_resource"></a> [resource](#output\_resource)
+
+Description: The full `github_repository` resource object.
+
+### <a name="output_resource_id"></a> [resource\_id](#output\_resource\_id)
+
+Description: The ID (name) of the repository.
+
+### <a name="output_rulesets"></a> [rulesets](#output\_rulesets)
+
+Description: A map of the created rulesets, keyed by ruleset name.
+
+### <a name="output_secrets"></a> [secrets](#output\_secrets)
+
+Description: A map of the created secrets and variables, keyed by `<type>-<secret|variable>-<name>`.  
+Only metadata is exported; secret values are never returned.
+
+### <a name="output_ssh_clone_url"></a> [ssh\_clone\_url](#output\_ssh\_clone\_url)
+
+Description: The SSH clone URL of the repository.
+
+### <a name="output_visibility"></a> [visibility](#output\_visibility)
+
+Description: The visibility of the repository.
 
 ## Modules
 

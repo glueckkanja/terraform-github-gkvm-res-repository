@@ -165,13 +165,6 @@ variable "homepage_url" {
   description = "A URL with more information about the repository."
 }
 
-variable "ignore_vulnerability_alerts_during_read" {
-  type        = bool
-  default     = false
-  description = "(Optional) Set to `true` to not call the vulnerability alerts endpoint so the resource can also be used without admin permissions during read. Defaults to `false`."
-  nullable    = false
-}
-
 variable "is_template" {
   type        = bool
   default     = false
@@ -237,10 +230,127 @@ DESCRIPTION
 }
 
 variable "repository_rulesets" {
-  type        = list(any)
+  type = list(object({
+    enforcement = string
+    name        = string
+    target      = string
+    bypass_actors = optional(list(object({
+      actor_id    = number
+      actor_type  = string
+      bypass_mode = string
+    })), [])
+    conditions = optional(object({
+      ref_name = object({
+        include = list(string)
+        exclude = list(string)
+      })
+    }), null)
+    rules = optional(object({
+      branch_name_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      commit_author_email_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      commit_message_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      committer_email_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      creation         = optional(bool, false)
+      update           = optional(bool, false)
+      deletion         = optional(bool, false)
+      non_fast_forward = optional(bool, false)
+      merge_queue = optional(object({
+        check_response_timeout_minutes    = optional(number, 60)
+        grouping_strategy                 = optional(string, "ALLGREEN")
+        max_entries_to_build              = optional(number, 5)
+        max_entries_to_merge              = optional(number, 5)
+        merge_method                      = optional(string, "MERGE")
+        min_entries_to_merge              = optional(number, 1)
+        min_entries_to_merge_wait_minutes = optional(number, 5)
+      }), null)
+      pull_request = optional(object({
+        dismiss_stale_reviews_on_push     = optional(bool, false)
+        require_code_owner_review         = optional(bool, false)
+        require_last_push_approval        = optional(bool, false)
+        required_approving_review_count   = optional(number, 0)
+        required_review_thread_resolution = optional(bool, false)
+      }), null)
+      required_deployments = optional(object({
+        required_deployment_environments = list(string)
+      }), null)
+      required_linear_history = optional(bool, false)
+      required_signatures     = optional(bool, false)
+      required_status_checks = optional(object({
+        required_check = list(object({
+          context        = string
+          integration_id = optional(number, null)
+        }))
+        strict_required_status_checks_policy = optional(bool, false)
+        do_not_enforce_on_create             = optional(bool, false)
+      }), null)
+      tag_name_pattern = optional(object({
+        operator = string
+        pattern  = string
+        name     = optional(string, null)
+        negate   = optional(bool, false)
+      }), null)
+      required_code_scanning = optional(object({
+        required_code_scanning_tool = list(object({
+          alerts_threshold          = string
+          security_alerts_threshold = string
+          tool                      = string
+        }))
+      }), null)
+      update_allows_fetch_and_merge = optional(bool, false)
+    }), {})
+  }))
   default     = []
-  description = "(Optional) A list of rulesets to apply to the repository."
+  description = <<DESCRIPTION
+(Optional) A list of rulesets to apply to the repository. Each object supports the following attributes:
+
+- `enforcement` - (Required) Possible values are `disabled`, `active`, `evaluate`. Note: `evaluate` is only supported for owners of type organization.
+- `name` - (Required) The name of the ruleset.
+- `target` - (Required) The type of ref that the ruleset applies to. Can be one of: `branch`, `tag`.
+- `bypass_actors` - (Optional) Actors that can bypass the ruleset. Defaults to `[]`.
+  - `actor_id` - (Required) The ID of the actor that can bypass the ruleset. For a user, this is their user ID. For a team, this is the team's node ID. For an app, this is the app's ID.
+  - `actor_type` - (Required) Can be one of: `RepositoryRole`, `Team`, `Integration` and `OrganizationAdministrator`.
+  - `bypass_mode` - (Required) Can be one of: `always`, `pull_request`.
+- `conditions` - (Optional) Conditions that must be met for the ruleset to apply. Defaults to `null`.
+  - `ref_name.include` - (Required) A list of reference names that must be included.
+  - `ref_name.exclude` - (Required) A list of reference names that must be excluded.
+- `rules` - (Optional) Rules within the ruleset. Defaults to `{}`. See the `ruleset` submodule documentation for the full attribute reference.
+DESCRIPTION
   nullable    = false
+
+  validation {
+    condition     = alltrue([for r in var.repository_rulesets : contains(["disabled", "active", "evaluate"], r.enforcement)])
+    error_message = "Each ruleset 'enforcement' must be one of 'disabled', 'active', or 'evaluate'."
+  }
+
+  validation {
+    condition     = alltrue([for r in var.repository_rulesets : contains(["branch", "tag"], r.target)])
+    error_message = "Each ruleset 'target' must be one of 'branch' or 'tag'."
+  }
+
+  validation {
+    condition     = length(distinct([for r in var.repository_rulesets : r.name])) == length(var.repository_rulesets)
+    error_message = "Each ruleset 'name' must be unique."
+  }
 }
 
 variable "secrets" {
@@ -252,8 +362,23 @@ variable "secrets" {
     is_variable     = optional(bool, false)
   }))
   default     = []
-  description = "(Optional) A list of secrets or variables to create in the repository."
+  description = <<DESCRIPTION
+(Optional) A list of secrets or variables to create in the repository.
+
+**NOTE:** entries are keyed by `type` and `name`, case-insensitively. Two entries
+that share a `type` and a case-insensitive `name` are rejected, even when one is a
+secret and the other an Actions variable. GitHub itself treats secrets and variables
+as separate namespaces, so if you need `FOO` as both, declare the variable with a
+separate `github_actions_variable` resource outside this module.
+DESCRIPTION
   nullable    = false
+
+  validation {
+    condition = length(distinct([
+      for s in var.secrets : format("%s-%s", lower(s.type), lower(s.name))
+    ])) == length(var.secrets)
+    error_message = "Each secret must be unique by the combination of 'type' and 'name' (compared case-insensitively). Note that an Actions secret and an Actions variable cannot share a name within this module."
+  }
 }
 
 variable "security_and_analysis" {
