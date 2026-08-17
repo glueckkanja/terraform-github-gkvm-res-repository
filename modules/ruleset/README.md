@@ -61,7 +61,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
-- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.6)
+- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
@@ -342,7 +342,27 @@ Default: `{}`
 
 ## Outputs
 
-No outputs.
+The following outputs are exported:
+
+### <a name="output_name"></a> [name](#output\_name)
+
+Description: The name of the repository ruleset.
+
+### <a name="output_node_id"></a> [node\_id](#output\_node\_id)
+
+Description: The GraphQL global node ID of the repository ruleset.
+
+### <a name="output_resource"></a> [resource](#output\_resource)
+
+Description: The full `github_repository_ruleset` resource object.
+
+### <a name="output_resource_id"></a> [resource\_id](#output\_resource\_id)
+
+Description: The ID of the repository ruleset.
+
+### <a name="output_ruleset_id"></a> [ruleset\_id](#output\_ruleset\_id)
+
+Description: The GitHub ID of the repository ruleset.
 
 ## Modules
 

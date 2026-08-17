@@ -41,7 +41,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
-- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.6)
+- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
@@ -146,7 +146,31 @@ Default: `true`
 
 ## Outputs
 
-No outputs.
+The following outputs are exported:
+
+### <a name="output_commit_sha"></a> [commit\_sha](#output\_commit\_sha)
+
+Description: The SHA of the commit that modified the file.
+
+### <a name="output_file"></a> [file](#output\_file)
+
+Description: The path of the managed file within the repository.
+
+### <a name="output_ref"></a> [ref](#output\_ref)
+
+Description: The name of the branch the file is committed to.
+
+### <a name="output_resource"></a> [resource](#output\_resource)
+
+Description: The full `github_repository_file` resource object.
+
+### <a name="output_resource_id"></a> [resource\_id](#output\_resource\_id)
+
+Description: The ID of the repository file.
+
+### <a name="output_sha"></a> [sha](#output\_sha)
+
+Description: The blob SHA of the file.
 
 ## Modules
 

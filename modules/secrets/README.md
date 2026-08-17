@@ -83,7 +83,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
-- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.6)
+- <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
@@ -149,7 +149,31 @@ Default: `"actions"`
 
 ## Outputs
 
-No outputs.
+The following outputs are exported:
+
+### <a name="output_created_at"></a> [created\_at](#output\_created\_at)
+
+Description: The date of the secret or variable creation.
+
+### <a name="output_is_variable"></a> [is\_variable](#output\_is\_variable)
+
+Description: Whether an Actions variable was created instead of a secret.
+
+### <a name="output_name"></a> [name](#output\_name)
+
+Description: The name of the created secret or variable.
+
+### <a name="output_resource_id"></a> [resource\_id](#output\_resource\_id)
+
+Description: The ID of the created secret or variable.
+
+### <a name="output_type"></a> [type](#output\_type)
+
+Description: The type of the created secret or variable.
+
+### <a name="output_updated_at"></a> [updated\_at](#output\_updated\_at)
+
+Description: The date of the secret or variable update.
 
 ## Modules
 

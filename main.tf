@@ -1,31 +1,31 @@
 resource "github_repository" "this" {
   name = var.name
 
-  allow_auto_merge                        = var.allow_auto_merge
-  allow_merge_commit                      = var.allow_merge_commit
-  allow_rebase_merge                      = var.allow_rebase_merge
-  allow_squash_merge                      = var.allow_squash_merge
-  allow_update_branch                     = var.allow_update_branch
-  archive_on_destroy                      = var.archive_on_destroy
-  archived                                = var.archived
-  auto_init                               = var.auto_init
-  delete_branch_on_merge                  = var.delete_branch_on_merge
-  description                             = var.description
-  gitignore_template                      = var.gitignore_template
-  has_discussions                         = var.has_discussions
-  has_issues                              = var.has_issues
-  has_projects                            = var.has_projects
-  has_wiki                                = var.has_wiki
-  homepage_url                            = var.homepage_url
-  is_template                             = var.is_template
-  license_template                        = var.license_template
-  merge_commit_message                    = var.merge_commit_message
-  merge_commit_title                      = var.merge_commit_title
-  squash_merge_commit_message             = var.squash_merge_commit_message
-  squash_merge_commit_title               = var.squash_merge_commit_title
-  visibility                              = var.visibility
-  vulnerability_alerts                    = var.vulnerability_alerts
-  web_commit_signoff_required             = var.web_commit_signoff_required
+  allow_auto_merge            = var.allow_auto_merge
+  allow_merge_commit          = var.allow_merge_commit
+  allow_rebase_merge          = var.allow_rebase_merge
+  allow_squash_merge          = var.allow_squash_merge
+  allow_update_branch         = var.allow_update_branch
+  archive_on_destroy          = var.archive_on_destroy
+  archived                    = var.archived
+  auto_init                   = var.auto_init
+  delete_branch_on_merge      = var.delete_branch_on_merge
+  description                 = var.description
+  gitignore_template          = var.gitignore_template
+  has_discussions             = var.has_discussions
+  has_issues                  = var.has_issues
+  has_projects                = var.has_projects
+  has_wiki                    = var.has_wiki
+  homepage_url                = var.homepage_url
+  is_template                 = var.is_template
+  license_template            = var.license_template
+  merge_commit_message        = var.merge_commit_message
+  merge_commit_title          = var.merge_commit_title
+  squash_merge_commit_message = var.squash_merge_commit_message
+  squash_merge_commit_title   = var.squash_merge_commit_title
+  visibility                  = var.visibility
+  vulnerability_alerts        = var.vulnerability_alerts
+  web_commit_signoff_required = var.web_commit_signoff_required
 
   dynamic "pages" {
     for_each = var.pages == null ? [] : [1]
@@ -91,14 +91,14 @@ resource "github_repository" "this" {
 resource "github_branch_default" "this" {
   count = var.default_branch == null ? 0 : 1
 
-  repository = var.name
+  repository = github_repository.this.name
   branch     = var.default_branch.branch
   rename     = var.default_branch.rename
 }
 
 module "rulesets" {
   source   = "./modules/ruleset"
-  for_each = { for idx, val in var.repository_rulesets : val.name => val }
+  for_each = { for val in var.repository_rulesets : val.name => val }
 
   enforcement   = each.value.enforcement
   name          = each.value.name
@@ -115,7 +115,7 @@ module "rulesets" {
 
 module "files" {
   source   = "./modules/file"
-  for_each = { for idx, val in var.files : val.file => val }
+  for_each = { for val in var.files : val.file => val }
 
   file                            = each.value.file
   repository                      = github_repository.this.name
@@ -123,10 +123,11 @@ module "files" {
   autocreate_branch_source_branch = each.value.autocreate_branch_source_branch
   autocreate_branch_source_sha    = each.value.autocreate_branch_source_sha
   # branch                          = each.value.branch
-  commit_author  = each.value.commit_author
-  commit_email   = each.value.commit_email
-  commit_message = each.value.commit_message
-  content        = each.value.content
+  commit_author       = each.value.commit_author
+  commit_email        = each.value.commit_email
+  commit_message      = each.value.commit_message
+  content             = each.value.content
+  overwrite_on_create = each.value.overwrite_on_create
 
   depends_on = [
     github_repository.this
@@ -134,8 +135,10 @@ module "files" {
 }
 
 module "secrets" {
-  source   = "./modules/secrets"
-  for_each = { for idx, val in var.secrets : format("%s-%s", lower(val.type), lower(val.name)) => val }
+  source = "./modules/secrets"
+  # NOTE: the key shape is load-bearing -- it is the state address of every managed
+  # secret. Do not change it without shipping a state-migration path.
+  for_each = { for val in var.secrets : format("%s-%s", lower(val.type), lower(val.name)) => val }
 
   encrypted_value = each.value.encrypted_value
   name            = each.value.name
