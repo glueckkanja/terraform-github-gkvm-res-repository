@@ -1,0 +1,66 @@
+---
+name: Bug report 🐛
+description: Report a defect in this module
+labels: ['bug']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report.
+
+        **Never paste secret values, tokens or full Terraform state.** Redact anything sensitive before submitting.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong?
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Module configuration
+      description: The relevant module block, with secrets redacted.
+      render: hcl
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Terraform output
+      description: The relevant plan or apply output, with secrets redacted.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: input
+    id: module_version
+    attributes:
+      label: Module version
+    validations:
+      required: true
+
+  - type: input
+    id: terraform_version
+    attributes:
+      label: Terraform version
+    validations:
+      required: true
+
+  - type: input
+    id: provider_version
+    attributes:
+      label: integrations/github provider version
+    validations:
+      required: true

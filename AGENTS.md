@@ -14,9 +14,30 @@ Read this before applying anything else in this file:
 - **This is not a Microsoft-published AVM module.** It borrows the AVM repository scaffolding — the `avm` script, the CI workflows, the terraform-docs layout — but it is not indexed in the AVM catalogue and is not bound by AVM telemetry requirements.
 - **`for_each` keys are state addresses.** This module is consumed across many states. Changing a `for_each` key expression forces a destroy and recreate of every affected resource in every state, and `moved` blocks cannot fix keys computed from a variable. Treat key expressions as immutable unless you are deliberately shipping a migration.
 
+- **There is no AVM tooling.** The `Makefile`, the `avm` / `avm.bat` / `avm.ps1` helper scripts and the `.github/actions/*` composite actions were removed. They depended on `Azure/avm-terraform-governance`, which is archived and deprecated, so the `make` targets and the managed PR-check workflow no longer exist. Do not run `./avm pre-commit`, `./avm pr-check`, `make autofix` or `make pre-commit` — and do not reinstate them. `avmfix` in particular rewrites `terraform.tf` and would re-add the `azapi` and `modtm` providers this module deliberately dropped.
+
 The AVM material below is retained because it is useful when **consuming** Azure AVM modules from other code. It describes those modules, not this one — so its `enable_telemetry` guidance in particular does not apply here.
 
-The build and validation commands, however, do apply to this repository. See "Custom Instructions for GitHub Copilot Agents" and "Validation Requirements".
+## Validating this repository
+
+Run these before opening a pull request. They need no Docker, no Azure and no credentials, and they mirror `.github/workflows/ci.yml` exactly:
+
+```bash
+terraform fmt -check -recursive -diff
+
+for d in . modules/ruleset modules/file modules/secrets examples/default; do
+  terraform -chdir="$d" init -backend=false -input=false
+  terraform -chdir="$d" validate
+done
+
+tflint --init
+tflint --recursive --minimum-failure-severity=error
+
+terraform-docs -c .terraform-docs.yml .
+for m in modules/*/; do terraform-docs -c .terraform-docs.yml "$m"; done
+```
+
+Commit any regenerated documentation — CI fails on README drift. Note that `examples/default/README.md` embeds its own HCL source and is maintained by hand; regenerating it with the root `.terraform-docs.yml` strips that block.
 
 # Azure Verified Modules (AVM) Terraform
 
@@ -25,21 +46,6 @@ The build and validation commands, however, do apply to this repository. See "Cu
 ## Overview
 
 Azure Verified Modules (AVM) are pre-built, tested, and validated Terraform and Bicep modules that follow Azure best practices. Use these modules to create, update, or review Azure Infrastructure as Code (IaC) with confidence.
-
-## Custom Instructions for GitHub Copilot Agents
-
-**IMPORTANT**: When GitHub Copilot Agent or GitHub Copilot Coding Agent is working on this repository, the following local unit tests MUST be executed to comply with PR checks. Failure to run these tests will cause PR validation failures:
-
-```bash
-PORCH_NO_TUI=1 ./avm pre-commit
-git add . && git commit -m "chore: avm pre-commit"
-PORCH_NO_TUI=1 ./avm pr-check
-```
-
-These commands must be run before any pull request is created or updated to ensure compliance with the Azure Verified Modules standards and prevent CI/CD pipeline failures.
-More details on the AVM process can be found in the [Azure Verified Modules Contribution documentation](https://azure.github.io/Azure-Verified-Modules/contributing/terraform/testing/).
-
-**Failure to run these tests will cause PR validation failures and prevent successful merges.**
 
 ## Module Discovery
 
@@ -151,21 +157,12 @@ module "storage_account" {
 
 ### Validation Requirements
 
-Before creating or updating any pull request:
+For **this** repository, see "Validating this repository" above — the AVM tooling referenced by upstream AVM guidance is not present here.
 
-```bash
-# Format code
-terraform fmt -recursive
-
-# Validate syntax
-terraform validate
-
-# AVM-specific validation (MANDATORY)
-export PORCH_NO_TUI=1
-./avm pre-commit
-<commit any changes>
-./avm pr-check
-```
+For an Azure AVM module, consult the current
+[AVM contribution documentation](https://azure.github.io/Azure-Verified-Modules/contributing/terraform/testing/);
+the legacy `./avm` helper and `Azure/avm-terraform-governance` were deprecated and archived, and replaced by
+[`Avm.Authoring`](https://www.powershellgallery.com/packages/Avm.Authoring).
 
 ## Tool Integration
 
@@ -232,13 +229,14 @@ module "virtual_network" {
 
 ## Compliance Checklist
 
-Before submitting any AVM-related code:
+Before submitting code that **consumes** an Azure AVM module:
 
 - [ ] Module version is pinned
 - [ ] Telemetry is enabled
 - [ ] Code is formatted (`terraform fmt`)
 - [ ] Code is validated (`terraform validate`)
-- [ ] AVM pre-commit checks pass (`./avm pre-commit`)
-- [ ] AVM PR checks pass (`./avm pr-check`)
 - [ ] Documentation is updated
 - [ ] Examples are tested and working
+
+For changes to **this** repository, use the checklist in
+[`CONTRIBUTING.md`](CONTRIBUTING.md) and the commands under "Validating this repository" instead.
