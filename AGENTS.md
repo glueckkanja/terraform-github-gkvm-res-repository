@@ -1,11 +1,11 @@
 ---
-description: 'terraform-github-gkvm-res-repository — a Glückkanja Verified Module (GKVM) for GitHub'
+description: 'terraform-github-gkvm-res-repository — a glueckkanja Verified Module (GKVM) for GitHub'
 applyTo: '**/*.terraform, **/*.tf, **/*.tfvars, **/*.tfstate, **/*.tflint.hcl, **/*.tf.json, **/*.tfvars.json'
 ---
 
 # terraform-github-gkvm-res-repository
 
-A **Glückkanja Verified Module (GKVM)** that manages GitHub repositories, and nothing else.
+A **glueckkanja Verified Module (GKVM)** that manages GitHub repositories, and nothing else.
 
 | | |
 |---|---|
