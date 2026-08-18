@@ -25,7 +25,7 @@ This example shows the most basic usage of the module. It creates a new actions 
 
 ```terraform
 module "actions_secret_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-actions-secret"
   repository      = "Example Repository"
@@ -38,7 +38,7 @@ module "actions_secret_creation" {
 
 ```terraform
 module "codespaces_secret_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-codespaces-secret"
   repository      = "Example Repository"
@@ -51,7 +51,7 @@ module "codespaces_secret_creation" {
 
 ```terraform
 module "dependabot_secret_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-dependabot-secret"
   repository      = "Example Repository"
@@ -64,7 +64,7 @@ module "dependabot_secret_creation" {
 
 ```terraform
 module "actions_variable_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-actions-variable"
   repository      = "Example Repository"
@@ -81,13 +81,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.9, < 2.0)
 
-- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
-
 - <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
-
-- <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
-
-- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
 
 ## Resources
 

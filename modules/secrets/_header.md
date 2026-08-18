@@ -23,7 +23,7 @@ This example shows the most basic usage of the module. It creates a new actions 
 
 ```terraform
 module "actions_secret_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-actions-secret"
   repository      = "Example Repository"
@@ -36,7 +36,7 @@ module "actions_secret_creation" {
 
 ```terraform
 module "codespaces_secret_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-codespaces-secret"
   repository      = "Example Repository"
@@ -49,7 +49,7 @@ module "codespaces_secret_creation" {
 
 ```terraform
 module "dependabot_secret_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-dependabot-secret"
   repository      = "Example Repository"
@@ -62,7 +62,7 @@ module "dependabot_secret_creation" {
 
 ```terraform
 module "actions_variable_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/secrets"
+  source = "glueckkanja/gkvm-res-repository/github//modules/secrets"
 
   name            = "example-actions-variable"
   repository      = "Example Repository"

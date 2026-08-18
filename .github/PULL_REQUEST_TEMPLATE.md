@@ -1,10 +1,9 @@
 ## Description
 
 <!--
->Thank you for your contribution !
-> Please include a summary of the change and which issue is fixed.
-> Please also include the context.
-> List any dependencies that are required for this change.
+> Thank you for your contribution!
+> Please summarise the change, the context behind it, and which issue it fixes.
+> List any dependencies this change requires.
 
 Fixes #123
 Closes #456
@@ -14,19 +13,34 @@ Closes #456
 
 <!-- Use the check-boxes [x] on the options that are relevant. -->
 
-- [ ] Non-module change (e.g. CI/CD, documentation, etc.)
-- [ ] Azure Verified Module updates:
-  - [ ] Bugfix containing backwards compatible bug fixes
-    - [ ] Someone has opened a bug report issue, and I have included "Closes #{bug_report_issue_number}" in the PR description.
-    - [ ] The bug was found by the module author, and no one has opened an issue to report it yet.
-  - [ ] Feature update backwards compatible feature updates.
-  - [ ] Breaking changes.
-  - [ ] Update to documentation
+- [ ] Non-module change (CI, documentation, tooling)
+- [ ] Bugfix, backwards compatible
+- [ ] Feature, backwards compatible
+- [ ] Breaking change
+- [ ] Documentation update
 
-# Checklist
+## State impact
 
-- [ ] I'm sure there are no other open Pull Requests for the same update/change
-- [ ] My corresponding pipelines / checks run clean and green without any errors or warnings
-- [ ] I did run all  [pre-commit](https://azure.github.io/Azure-Verified-Modules/contributing/terraform/terraform-contribution-flow/#5-run-pre-commit-checks) checks
+<!--
+> This module is consumed across many Terraform states, so resource addresses are a
+> public interface. State the impact explicitly, even when it is "none".
+-->
 
-<!--  Please keep up to date with the contribution guide at https://aka.ms/avm/contribute/terraform -->
+- [ ] No state impact — no resource address changes, no forced replacements
+- [ ] State impact, described below
+
+<!--
+> If there is impact, describe what Terraform will plan on the first run after
+> upgrading, and what a consumer has to do about it. Changing a `for_each` key
+> expression rekeys every affected resource in every state and cannot be repaired
+> with `moved` blocks — call that out prominently.
+-->
+
+## Checklist
+
+- [ ] There are no other open pull requests for the same change
+- [ ] `terraform fmt -check -recursive` passes
+- [ ] `terraform validate` passes for the root module, every submodule and the example
+- [ ] `tflint --recursive --minimum-failure-severity=error` passes
+- [ ] Documentation regenerated with `terraform-docs` and committed
+- [ ] CI is green

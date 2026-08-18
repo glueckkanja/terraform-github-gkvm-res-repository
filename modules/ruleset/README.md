@@ -22,7 +22,7 @@ This example shows the most basic usage of the module. It creates a new ruleset 
 
 ```terraform
 module "ruleset_creation" {
-  source = "glueckkanja/terraform-azurerm-avm-res-network-virtualnetwork//modules/ruleset"
+  source = "glueckkanja/gkvm-res-repository/github//modules/ruleset"
 
   name       = "example-ruleset"
   repository = "Example Repository"
@@ -59,13 +59,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.9, < 2.0)
 
-- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
-
 - <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
-
-- <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
-
-- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
 
 ## Resources
 

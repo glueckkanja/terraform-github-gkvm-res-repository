@@ -1,15 +1,20 @@
 # Support
 
-> ⚠️**Note:** For the full details on the support statements, SLAs, and more for the Azure Verified Modules (AVM) initiative please visit [aka.ms/AVM/Support](https://aka.ms/avm/support) ⚠️
-
 ## How to file issues and get help
 
-This project uses GitHub Issues to track bugs and feature requests. Please search the existing issues before filing new issues to avoid duplicates. For new issues, file your bug or feature request as a new issue.
+This project uses GitHub Issues to track bugs and feature requests. Please search the existing issues before filing a new one to avoid duplicates. For new issues, file your bug or feature request as a new issue.
 
-Issues can be created and searched through for existing [issues here](../../issues).
+Issues can be created and searched for [here](../../issues).
 
-Please provide as much information as possible when filing an issue. Include screenshots or correlation IDs if possible (please redact any sensitive information).
+Please provide as much information as possible when filing an issue, and redact any sensitive information — in particular, never paste secret values, tokens or full Terraform state.
 
-For instructions on how to get deployments and correlation ID, please follow this link [here](https://learn.microsoft.com/azure/azure-resource-manager/templates/deployment-history?tabs=azure-portal#get-deployments-and-correlation-id).
+A good report usually includes:
 
-We may ask you to create an Azure support request once we have triaged the issue following the process documented [here](https://learn.microsoft.com/azure/azure-portal/supportability/how-to-create-azure-support-request).
+- The module version, Terraform version and `integrations/github` provider version
+- The relevant module block, with secrets redacted
+- The `terraform plan` or `terraform apply` output, with secrets redacted
+- What you expected to happen instead
+
+## Support scope
+
+This module is maintained on a best-effort basis. There is no service level agreement attached to it.
