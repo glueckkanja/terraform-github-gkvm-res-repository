@@ -68,6 +68,22 @@ output "files" {
   value       = { for k, v in module.files : k => v.resource }
 }
 
+output "environments" {
+  description = <<DESCRIPTION
+A map of the created environments, keyed by environment name. Environment secret
+values are never returned; only their metadata is exposed.
+DESCRIPTION
+  value = { for k, v in module.environments : k => {
+    resource            = v.resource
+    resource_id         = v.resource_id
+    name                = v.name
+    repository_id       = v.repository_id
+    deployment_policies = v.deployment_policies
+    secrets             = v.secrets
+    variables           = v.variables
+  } }
+}
+
 output "secrets" {
   description = <<DESCRIPTION
 A map of the created secrets and variables, keyed by `<type>-<secret|variable>-<name>`.

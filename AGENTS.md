@@ -12,7 +12,7 @@ A **Glückkanja Verified Module (GKVM)** that manages GitHub repositories, and n
 | Registry address | `glueckkanja/gkvm-res-repository/github` |
 | Repository | `glueckkanja/terraform-github-gkvm-res-repository` |
 | Provider | `integrations/github` — the only one |
-| Submodules | `modules/ruleset`, `modules/file`, `modules/secrets` |
+| Submodules | `modules/ruleset`, `modules/file`, `modules/secrets`, `modules/environment` |
 
 This repository was originally generated from the Azure Verified Modules (AVM) template, but it is **not an AVM module** and is not governed by AVM rules or tooling. Treat any leftover AVM convention you encounter as an artefact to remove, not a standard to uphold.
 
@@ -33,6 +33,7 @@ terraform.tf             required_version + required_providers
 modules/ruleset/         github_repository_ruleset
 modules/file/            github_repository_file
 modules/secrets/         Actions / Codespaces / Dependabot secrets and Actions variables
+modules/environment/     Deployment environments, protection rules, env secrets and variables
 examples/default/        the published example
 _header.md / _footer.md  terraform-docs fragments for the root README
 ```
@@ -44,7 +45,7 @@ Run these before opening a pull request. They need no Docker, no Azure and no cr
 ```bash
 terraform fmt -check -recursive -diff
 
-for d in . modules/ruleset modules/file modules/secrets examples/default; do
+for d in . modules/ruleset modules/file modules/secrets modules/environment examples/default; do
   terraform -chdir="$d" init -backend=false -input=false
   terraform -chdir="$d" validate
 done

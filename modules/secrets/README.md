@@ -97,21 +97,9 @@ The following resources are used by this module:
 
 The following input variables are required:
 
-### <a name="input_encrypted_value"></a> [encrypted\_value](#input\_encrypted\_value)
-
-Description: (Optional) Encrypted value of the secret using the GitHub public key in Base64 format. Only valid if 'is\_variable' is `false`.
-
-Type: `string`
-
 ### <a name="input_name"></a> [name](#input\_name)
 
 Description: (Required) The name of the secret.
-
-Type: `string`
-
-### <a name="input_plaintext_value"></a> [plaintext\_value](#input\_plaintext\_value)
-
-Description: (Optional) Plain text value of the secret.
 
 Type: `string`
 
@@ -133,6 +121,14 @@ Type: `bool`
 
 Default: `false`
 
+### <a name="input_key_id"></a> [key\_id](#input\_key\_id)
+
+Description: (Optional) The ID of the public key used to encrypt 'value\_encrypted'. Required whenever 'value\_encrypted' is set.
+
+Type: `string`
+
+Default: `null`
+
 ### <a name="input_type"></a> [type](#input\_type)
 
 Description: (Optional) The type of secret. Allowed values are 'actions', 'codespaces', and 'dependabot'.
@@ -140,6 +136,22 @@ Description: (Optional) The type of secret. Allowed values are 'actions', 'codes
 Type: `string`
 
 Default: `"actions"`
+
+### <a name="input_value"></a> [value](#input\_value)
+
+Description: (Optional) Plaintext value of the secret or variable. The provider encrypts secret values before sending them to GitHub. Required when 'is\_variable' is `true`.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_value_encrypted"></a> [value\_encrypted](#input\_value\_encrypted)
+
+Description: (Optional) Value already encrypted with the repository public key, in Base64 format. Only valid when 'is\_variable' is `false`.
+
+Type: `string`
+
+Default: `null`
 
 ## Outputs
 

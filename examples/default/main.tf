@@ -26,4 +26,30 @@ module "repository" {
   has_wiki         = true
   license_template = "mit"
   visibility       = "public"
+
+  environments = [
+    {
+      name = "staging"
+    },
+    {
+      name                = "production"
+      wait_timer          = 5
+      prevent_self_review = true
+      can_admins_bypass   = false
+
+      deployment_branch_policy = {
+        protected_branches     = false
+        custom_branch_policies = true
+      }
+
+      deployment_policies = [
+        { branch_pattern = "main" },
+        { tag_pattern = "v*" },
+      ]
+
+      variables = [
+        { name = "TARGET_REGION", value = "westeurope" },
+      ]
+    },
+  ]
 }

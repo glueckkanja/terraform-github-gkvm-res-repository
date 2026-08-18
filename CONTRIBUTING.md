@@ -15,7 +15,7 @@ Run the same checks CI runs:
 terraform fmt -check -recursive -diff
 
 # Validation, for the root module, every submodule and the example
-for d in . modules/ruleset modules/file modules/secrets examples/default; do
+for d in . modules/ruleset modules/file modules/secrets modules/environment examples/default; do
   terraform -chdir="$d" init -backend=false -input=false
   terraform -chdir="$d" validate
 done

@@ -133,6 +133,67 @@ Type: `string`
 
 Default: `null`
 
+### <a name="input_environments"></a> [environments](#input\_environments)
+
+Description: (Optional) A list of deployment environments to create in the repository. Each object supports the following attributes:
+
+- `name` - (Required) The name of the environment.
+- `can_admins_bypass` - (Optional) Whether administrators can bypass the environment's protection rules. Defaults to `true`, matching GitHub's own default.
+- `prevent_self_review` - (Optional) Whether the user who triggered the deployment is prevented from approving it. Defaults to `false`.
+- `wait_timer` - (Optional) Minutes to wait before allowing deployments, between 0 and 43200.
+- `reviewers` - (Optional) Users and teams that must approve deployments. At most 6 in total.
+  - `teams` - (Optional) Team IDs. This is the team's numeric ID, not its slug.
+  - `users` - (Optional) User IDs.
+- `deployment_branch_policy` - (Optional) Restricts which refs may deploy. Exactly one of the two attributes may be `true`.
+  - `protected_branches` - (Required) Whether only branches with branch protection rules may deploy.
+  - `custom_branch_policies` - (Required) Whether only refs matching `deployment_policies` may deploy.
+- `deployment_policies` - (Optional) Branch and tag patterns allowed to deploy. Requires `deployment_branch_policy.custom_branch_policies` to be `true`. Each entry sets exactly one of:
+  - `branch_pattern` - (Optional) A branch name pattern, for example `releases/*`.
+  - `tag_pattern` - (Optional) A tag name pattern, for example `v*`.
+- `secrets` - (Optional) Actions secrets scoped to the environment. Each entry sets exactly one of `value` and `value_encrypted`.
+  - `name` - (Required) The name of the secret.
+  - `value` - (Optional) The plaintext value, encrypted by the provider before transmission.
+  - `value_encrypted` - (Optional) A value already encrypted with the repository public key, in Base64.
+  - `key_id` - (Optional) The ID of the public key used for `value_encrypted`. Required when `value_encrypted` is set.
+- `variables` - (Optional) Actions variables scoped to the environment.
+  - `name` - (Required) The name of the variable.
+  - `value` - (Required) The value of the variable.
+
+Type:
+
+```hcl
+list(object({
+    name                = string
+    can_admins_bypass   = optional(bool, true)
+    prevent_self_review = optional(bool, false)
+    wait_timer          = optional(number, null)
+    reviewers = optional(object({
+      teams = optional(set(number), null)
+      users = optional(set(number), null)
+    }), null)
+    deployment_branch_policy = optional(object({
+      protected_branches     = bool
+      custom_branch_policies = bool
+    }), null)
+    deployment_policies = optional(list(object({
+      branch_pattern = optional(string, null)
+      tag_pattern    = optional(string, null)
+    })), [])
+    secrets = optional(list(object({
+      name            = string
+      value           = optional(string, null)
+      value_encrypted = optional(string, null)
+      key_id          = optional(string, null)
+    })), [])
+    variables = optional(list(object({
+      name  = string
+      value = string
+    })), [])
+  }))
+```
+
+Default: `[]`
+
 ### <a name="input_files"></a> [files](#input\_files)
 
 Description: (Optional) A list of files to create or update in the repository.
@@ -396,8 +457,9 @@ Type:
 ```hcl
 list(object({
     name            = string
-    encrypted_value = optional(string, null)
-    plaintext_value = optional(string, null)
+    value           = optional(string, null)
+    value_encrypted = optional(string, null)
+    key_id          = optional(string, null)
     type            = optional(string, "actions")
     is_variable     = optional(bool, false)
   }))
@@ -504,6 +566,11 @@ The following outputs are exported:
 
 Description: The name of the default branch of the repository, or `null` when the default branch is not managed by this module.
 
+### <a name="output_environments"></a> [environments](#output\_environments)
+
+Description: A map of the created environments, keyed by environment name. Environment secret  
+values are never returned; only their metadata is exposed.
+
 ### <a name="output_files"></a> [files](#output\_files)
 
 Description: A map of the created repository files, keyed by file path.
@@ -564,6 +631,12 @@ Description: The visibility of the repository.
 ## Modules
 
 The following Modules are called:
+
+### <a name="module_environments"></a> [environments](#module\_environments)
+
+Source: ./modules/environment
+
+Version:
 
 ### <a name="module_files"></a> [files](#module\_files)
 
