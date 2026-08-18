@@ -1,24 +1,43 @@
 ---
-description: 'This repository (a GitHub resource module), plus Azure Verified Modules (AVM) and Terraform'
+description: 'terraform-github-gkvm-res-repository — a Glückkanja Verified Module (GKVM) for GitHub'
 applyTo: '**/*.terraform, **/*.tf, **/*.tfvars, **/*.tfstate, **/*.tflint.hcl, **/*.tf.json, **/*.tfvars.json'
 ---
 
-# This repository
+# terraform-github-gkvm-res-repository
 
-`terraform-github-gkvm-res-repository` is a **GitHub** resource module published by Glück & Kanja. It manages GitHub repositories and nothing else.
+A **Glückkanja Verified Module (GKVM)** that manages GitHub repositories, and nothing else.
 
-Read this before applying anything else in this file:
+| | |
+|---|---|
+| Registry address | `glueckkanja/gkvm-res-repository/github` |
+| Repository | `glueckkanja/terraform-github-gkvm-res-repository` |
+| Provider | `integrations/github` — the only one |
+| Submodules | `modules/ruleset`, `modules/file`, `modules/secrets` |
 
-- **`integrations/github` is the only provider.** The module does not require, configure, or authenticate against Azure. Do not add `azapi`, `azurerm`, `modtm` or `random` provider requirements.
-- **There is no telemetry and no `enable_telemetry` variable.** Both were removed, because the AVM telemetry stack made the module unusable without Azure credentials and reported Azure tenant identifiers that have no bearing on a GitHub repository. Do not reintroduce either.
-- **This is not a Microsoft-published AVM module.** It borrows the AVM repository scaffolding — the `avm` script, the CI workflows, the terraform-docs layout — but it is not indexed in the AVM catalogue and is not bound by AVM telemetry requirements.
-- **`for_each` keys are state addresses.** This module is consumed across many states. Changing a `for_each` key expression forces a destroy and recreate of every affected resource in every state, and `moved` blocks cannot fix keys computed from a variable. Treat key expressions as immutable unless you are deliberately shipping a migration.
+This repository was originally generated from the Azure Verified Modules (AVM) template, but it is **not an AVM module** and is not governed by AVM rules or tooling. Treat any leftover AVM convention you encounter as an artefact to remove, not a standard to uphold.
 
-- **There is no AVM tooling.** The `Makefile`, the `avm` / `avm.bat` / `avm.ps1` helper scripts and the `.github/actions/*` composite actions were removed. They depended on `Azure/avm-terraform-governance`, which is archived and deprecated, so the `make` targets and the managed PR-check workflow no longer exist. Do not run `./avm pre-commit`, `./avm pr-check`, `make autofix` or `make pre-commit` — and do not reinstate them. `avmfix` in particular rewrites `terraform.tf` and would re-add the `azapi` and `modtm` providers this module deliberately dropped.
+## Hard rules
 
-The AVM material below is retained because it is useful when **consuming** Azure AVM modules from other code. It describes those modules, not this one — so its `enable_telemetry` guidance in particular does not apply here.
+- **`integrations/github` is the only provider.** The module never authenticates against Azure. Do not add `azapi`, `azurerm`, `modtm` or `random` provider requirements.
+- **No telemetry.** The module collects nothing and makes no network calls beyond the GitHub API. Do not add telemetry resources, data sources or variables.
+- **No AVM tooling.** `Makefile`, the `avm` / `avm.bat` / `avm.ps1` helpers and the `.github/actions/*` composite actions were removed; they depended on `Azure/avm-terraform-governance`, which is archived and deprecated. Do not run or reinstate `./avm pre-commit`, `./avm pr-check`, `make autofix` or `make pre-commit`. `avmfix` in particular rewrites `terraform.tf` to the AVM provider baseline and would re-add the Azure providers this module deliberately dropped.
+- **`for_each` keys are state addresses.** This module is consumed across many states. Changing a `for_each` key expression forces a destroy and recreate of every affected resource in every state, and `moved` blocks cannot repair keys computed from a variable — leaving consumers to run `terraform state mv` by hand. Treat key expressions as immutable unless you are deliberately shipping a migration, and say so explicitly in the pull request.
 
-## Validating this repository
+## Repository layout
+
+```
+main.tf                  github_repository, github_branch_default, submodule calls
+variables.tf             root inputs
+outputs.tf               root outputs
+terraform.tf             required_version + required_providers
+modules/ruleset/         github_repository_ruleset
+modules/file/            github_repository_file
+modules/secrets/         Actions / Codespaces / Dependabot secrets and Actions variables
+examples/default/        the published example
+_header.md / _footer.md  terraform-docs fragments for the root README
+```
+
+## Validating
 
 Run these before opening a pull request. They need no Docker, no Azure and no credentials, and they mirror `.github/workflows/ci.yml` exactly:
 
@@ -37,206 +56,26 @@ terraform-docs -c .terraform-docs.yml .
 for m in modules/*/; do terraform-docs -c .terraform-docs.yml "$m"; done
 ```
 
-Commit any regenerated documentation — CI fails on README drift. Note that `examples/default/README.md` embeds its own HCL source and is maintained by hand; regenerating it with the root `.terraform-docs.yml` strips that block.
+Commit any regenerated documentation — CI fails on README drift.
 
-# Azure Verified Modules (AVM) Terraform
+`examples/default/README.md` embeds its own HCL source and is maintained by hand. Do not regenerate it with the root `.terraform-docs.yml`, which would strip that block.
 
-> **Scope:** this section onward is about consuming Azure AVM modules published by Microsoft. It does not describe this repository.
+## Conventions
 
-## Overview
+- **Commits:** Conventional Commits; `!` marks a breaking change.
+- **Identifiers:** `snake_case` throughout.
+- **Documentation:** every variable and output carries a `description`. Submodule usage examples live in that submodule's `_header.md`, not in its generated `README.md`.
+- **Versioning:** semver. A breaking change means a major bump.
+- **Module sources:** registry addresses are `<NAMESPACE>/<NAME>/<PROVIDER>`, so a submodule is `glueckkanja/gkvm-res-repository/github//modules/<name>`. The trailing `github` is the *provider* segment, derived from the `terraform-<PROVIDER>-<NAME>` repository naming pattern — it is not a path component.
 
-Azure Verified Modules (AVM) are pre-built, tested, and validated Terraform and Bicep modules that follow Azure best practices. Use these modules to create, update, or review Azure Infrastructure as Code (IaC) with confidence.
+## Secrets handling
 
-## Module Discovery
+`modules/secrets` manages values that must never leak into output:
 
-### Terraform Registry
+- `plaintext_value` is marked `sensitive`, and is still written to Terraform state in plaintext, as with any Terraform secret.
+- The submodule deliberately exports **metadata only** — never the resource objects, which carry `plaintext_value`. Keep it that way when adding outputs.
 
-- Search for "avm" + resource name
-- Filter by "Partner" tag to find official AVM modules
-- Example: Search "avm storage account" → filter by Partner
+## Further reading
 
-### Official AVM Index
-
-- **Terraform Resources**: `https://azure.github.io/Azure-Verified-Modules/indexes/terraform/tf-resource-modules/`
-- **Terraform Patterns**: `https://azure.github.io/Azure-Verified-Modules/indexes/terraform/tf-pattern-modules/`
-- **Bicep Resources**: `https://azure.github.io/Azure-Verified-Modules/indexes/bicep/bicep-resource-modules/`
-- **Bicep Patterns**: `https://azure.github.io/Azure-Verified-Modules/indexes/bicep/bicep-pattern-modules/`
-
-## Terraform Module Usage
-
-### From Examples
-
-1. Copy the example code from the module documentation
-2. Replace `source = "../../"` with `source = "Azure/avm-res-{service}-{resource}/azurerm"`
-3. Add `version = "1.0.0"` (use latest available)
-4. Set `enable_telemetry = true`
-
-### From Scratch
-
-1. Copy the Provision Instructions from module documentation
-2. Configure required and optional inputs
-3. Pin the module version
-4. Enable telemetry
-
-### Example Usage
-
-```hcl
-module "storage_account" {
-  source  = "Azure/avm-res-storage-storageaccount/azurerm"
-  version = "0.1.0"
-
-  enable_telemetry    = true
-  location            = "East US"
-  name                = "mystorageaccount"
-  resource_group_name = "my-rg"
-
-  # Additional configuration...
-}
-```
-
-## Naming Conventions
-
-### Module Types
-
-- **Resource Modules**: `Azure/avm-res-{service}-{resource}/azurerm`
-  - Example: `Azure/avm-res-storage-storageaccount/azurerm`
-- **Pattern Modules**: `Azure/avm-ptn-{pattern}/azurerm`
-  - Example: `Azure/avm-ptn-aks-enterprise/azurerm`
-- **Utility Modules**: `Azure/avm-utl-{utility}/azurerm`
-  - Example: `Azure/avm-utl-regions/azurerm`
-
-### Service Naming
-
-- Use kebab-case for services and resources
-- Follow Azure service names (e.g., `storage-storageaccount`, `network-virtualnetwork`)
-
-## Version Management
-
-### Check Available Versions
-
-- Endpoint: `https://registry.terraform.io/v1/modules/Azure/{module}/azurerm/versions`
-- Example: `https://registry.terraform.io/v1/modules/Azure/avm-res-storage-storageaccount/azurerm/versions`
-
-### Version Pinning Best Practices
-
-- For providers: use pessimistic version constraints for minor version: `version = "~> 1.0"`
-- For modules: Pin to specific versions: `version = "1.2.3"`
-
-## Module Sources
-
-### Terraform Registry
-
-- **URL Pattern**: `https://registry.terraform.io/modules/Azure/{module}/azurerm/latest`
-- **Example**: `https://registry.terraform.io/modules/Azure/avm-res-storage-storageaccount/azurerm/latest`
-
-### GitHub Repository
-
-- **URL Pattern**: `https://github.com/Azure/terraform-azurerm-avm-{type}-{service}-{resource}`
-- **Examples**:
-  - Resource: `https://github.com/Azure/terraform-azurerm-avm-res-storage-storageaccount`
-  - Pattern: `https://github.com/Azure/terraform-azurerm-avm-ptn-aks-enterprise`
-
-## Development Best Practices
-
-### Module Usage
-
-- ✅ **Always** pin module versions
-- ✅ **Start** with official examples from module documentation
-- ✅ **Review** all inputs and outputs before implementation
-- ✅ **Enable** telemetry: `enable_telemetry = true` — *Azure AVM modules only. This repository has no such variable; see "This repository" above.*
-- ✅ **Use** AVM utility modules for common patterns
-
-### Code Quality
-
-- ✅ **Always** run `terraform fmt` after making changes
-- ✅ **Always** run `terraform validate` after making changes
-- ✅ **Use** meaningful variable names and descriptions
-- ✅ **Use** snake_case
-- ✅ **Add** proper tags and metadata
-- ✅ **Document** complex configurations
-
-### Validation Requirements
-
-For **this** repository, see "Validating this repository" above — the AVM tooling referenced by upstream AVM guidance is not present here.
-
-For an Azure AVM module, consult the current
-[AVM contribution documentation](https://azure.github.io/Azure-Verified-Modules/contributing/terraform/testing/);
-the legacy `./avm` helper and `Azure/avm-terraform-governance` were deprecated and archived, and replaced by
-[`Avm.Authoring`](https://www.powershellgallery.com/packages/Avm.Authoring).
-
-## Tool Integration
-
-### Use Available Tools
-
-- **Deployment Guidance**: Use `azure_get_deployment_best_practices` tool
-- **Service Documentation**: Use `microsoft.docs.mcp` tool for Azure service-specific guidance
-- **Schema Information**: Use `query_azapi_resource_schema` & `query_azapi_resource_document` to query AzAPI resources and schemas.
-- **Provider resources and resource schemas**: Use `list_terraform_provider_items` & `query_terraform_schema` to query azurerm resource schema.
-
-### GitHub Copilot Integration
-
-When working with AVM repositories:
-
-1. Always check for existing modules before creating new resources
-2. Use the official examples as starting points
-3. Run all validation tests before committing
-4. Document any customizations or deviations from examples
-
-## Common Patterns
-
-### Resource Group Module
-
-```hcl
-module "resource_group" {
-  source  = "Azure/avm-res-resources-resourcegroup/azurerm"
-  version = "0.1.0" # use latest
-
-  enable_telemetry = true
-  location         = var.location
-  name            = var.resource_group_name
-}
-```
-
-### Virtual Network Module
-
-```hcl
-module "virtual_network" {
-  source  = "Azure/avm-res-network-virtualnetwork/azurerm"
-  version = "0.1.0" # use latest
-
-  enable_telemetry    = true
-  location            = module.resource_group.location
-  name                = var.vnet_name
-  resource_group_name = module.resource_group.name
-  address_space       = ["10.0.0.0/16"]
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Version Conflicts**: Always check compatibility between module and provider versions
-2. **Missing Dependencies**: Ensure all required resources are created first
-3. **Validation Failures**: Run AVM validation tools before committing
-4. **Documentation**: Always refer to the latest module documentation
-
-### Support Resources
-
-- **AVM Documentation**: `https://azure.github.io/Azure-Verified-Modules/`
-- **GitHub Issues**: Report issues in the specific module's GitHub repository
-- **Community**: Azure Terraform Provider GitHub discussions
-
-## Compliance Checklist
-
-Before submitting code that **consumes** an Azure AVM module:
-
-- [ ] Module version is pinned
-- [ ] Telemetry is enabled
-- [ ] Code is formatted (`terraform fmt`)
-- [ ] Code is validated (`terraform validate`)
-- [ ] Documentation is updated
-- [ ] Examples are tested and working
-
-For changes to **this** repository, use the checklist in
-[`CONTRIBUTING.md`](CONTRIBUTING.md) and the commands under "Validating this repository" instead.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contribution workflow and the pull request checklist
+- [`SECURITY.md`](SECURITY.md) — vulnerability reporting
