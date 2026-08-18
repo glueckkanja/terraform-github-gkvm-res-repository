@@ -89,6 +89,136 @@ variable "description" {
   description = "A short description of the repository."
 }
 
+variable "environments" {
+  type = list(object({
+    name                = string
+    can_admins_bypass   = optional(bool, true)
+    prevent_self_review = optional(bool, false)
+    wait_timer          = optional(number, null)
+    reviewers = optional(object({
+      teams = optional(set(number), null)
+      users = optional(set(number), null)
+    }), null)
+    deployment_branch_policy = optional(object({
+      protected_branches     = bool
+      custom_branch_policies = bool
+    }), null)
+    deployment_policies = optional(list(object({
+      branch_pattern = optional(string, null)
+      tag_pattern    = optional(string, null)
+    })), [])
+    secrets = optional(list(object({
+      name            = string
+      value           = optional(string, null)
+      value_encrypted = optional(string, null)
+      key_id          = optional(string, null)
+    })), [])
+    variables = optional(list(object({
+      name  = string
+      value = string
+    })), [])
+  }))
+  default     = []
+  description = <<DESCRIPTION
+(Optional) A list of deployment environments to create in the repository. Each object supports the following attributes:
+
+- `name` - (Required) The name of the environment.
+- `can_admins_bypass` - (Optional) Whether administrators can bypass the environment's protection rules. Defaults to `true`, matching GitHub's own default.
+- `prevent_self_review` - (Optional) Whether the user who triggered the deployment is prevented from approving it. Defaults to `false`.
+- `wait_timer` - (Optional) Minutes to wait before allowing deployments, between 0 and 43200.
+- `reviewers` - (Optional) Users and teams that must approve deployments. At most 6 in total.
+  - `teams` - (Optional) Team IDs. This is the team's numeric ID, not its slug.
+  - `users` - (Optional) User IDs.
+- `deployment_branch_policy` - (Optional) Restricts which refs may deploy. Exactly one of the two attributes may be `true`.
+  - `protected_branches` - (Required) Whether only branches with branch protection rules may deploy.
+  - `custom_branch_policies` - (Required) Whether only refs matching `deployment_policies` may deploy.
+- `deployment_policies` - (Optional) Branch and tag patterns allowed to deploy. Requires `deployment_branch_policy.custom_branch_policies` to be `true`. Each entry sets exactly one of:
+  - `branch_pattern` - (Optional) A branch name pattern, for example `releases/*`.
+  - `tag_pattern` - (Optional) A tag name pattern, for example `v*`.
+- `secrets` - (Optional) Actions secrets scoped to the environment. Each entry sets exactly one of `value` and `value_encrypted`.
+  - `name` - (Required) The name of the secret.
+  - `value` - (Optional) The plaintext value, encrypted by the provider before transmission.
+  - `value_encrypted` - (Optional) A value already encrypted with the repository public key, in Base64.
+  - `key_id` - (Optional) The ID of the public key used for `value_encrypted`. Required when `value_encrypted` is set.
+- `variables` - (Optional) Actions variables scoped to the environment.
+  - `name` - (Required) The name of the variable.
+  - `value` - (Required) The value of the variable.
+DESCRIPTION
+  nullable    = false
+
+  validation {
+    condition     = length(distinct([for e in var.environments : e.name])) == length(var.environments)
+    error_message = "Each environment 'name' must be unique."
+  }
+
+  validation {
+    condition = alltrue([
+      for e in var.environments :
+      length(e.deployment_policies) == 0 || try(e.deployment_branch_policy.custom_branch_policies, false)
+    ])
+    error_message = "An environment with 'deployment_policies' must set 'deployment_branch_policy.custom_branch_policies' to true."
+  }
+
+  validation {
+    condition = alltrue([
+      for e in var.environments : e.deployment_branch_policy == null ||
+      e.deployment_branch_policy.protected_branches != e.deployment_branch_policy.custom_branch_policies
+    ])
+    error_message = "In 'deployment_branch_policy', exactly one of 'protected_branches' and 'custom_branch_policies' must be true."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for e in var.environments : [
+        for p in e.deployment_policies : (p.branch_pattern == null) != (p.tag_pattern == null)
+      ]
+    ]))
+    error_message = "Each deployment policy must set exactly one of 'branch_pattern' or 'tag_pattern'."
+  }
+
+  validation {
+    condition = alltrue([
+      for e in var.environments : e.reviewers == null ||
+      length(coalesce(e.reviewers.teams, [])) + length(coalesce(e.reviewers.users, [])) <= 6
+    ])
+    error_message = "An environment supports at most 6 reviewers in total across 'teams' and 'users'."
+  }
+
+  validation {
+    condition = alltrue([
+      for e in var.environments : e.wait_timer == null || try(e.wait_timer >= 0 && e.wait_timer <= 43200, false)
+    ])
+    error_message = "The environment 'wait_timer' must be between 0 and 43200 minutes."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for e in var.environments : [
+        for s in e.secrets : (s.value == null) != (s.value_encrypted == null)
+      ]
+    ]))
+    error_message = "Each environment secret must set exactly one of 'value' or 'value_encrypted'."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for e in var.environments : [
+        for s in e.secrets : s.value_encrypted == null || s.key_id != null
+      ]
+    ]))
+    error_message = "An environment secret using 'value_encrypted' must also set 'key_id'."
+  }
+
+  validation {
+    condition = alltrue([
+      for e in var.environments :
+      length(distinct([for s in e.secrets : s.name])) == length(e.secrets) &&
+      length(distinct([for v in e.variables : v.name])) == length(e.variables)
+    ])
+    error_message = "Secret and variable names must be unique within each environment."
+  }
+}
+
 variable "files" {
   type = list(object({
     content = string
@@ -345,8 +475,9 @@ DESCRIPTION
 variable "secrets" {
   type = list(object({
     name            = string
-    encrypted_value = optional(string, null)
-    plaintext_value = optional(string, null)
+    value           = optional(string, null)
+    value_encrypted = optional(string, null)
+    key_id          = optional(string, null)
     type            = optional(string, "actions")
     is_variable     = optional(bool, false)
   }))
@@ -367,6 +498,21 @@ DESCRIPTION
       for s in var.secrets : format("%s-%s", lower(s.type), lower(s.name))
     ])) == length(var.secrets)
     error_message = "Each secret must be unique by the combination of 'type' and 'name' (compared case-insensitively). Note that an Actions secret and an Actions variable cannot share a name within this module."
+  }
+
+  validation {
+    condition     = alltrue([for s in var.secrets : (s.value == null) != (s.value_encrypted == null)])
+    error_message = "Each secret must set exactly one of 'value' or 'value_encrypted'."
+  }
+
+  validation {
+    condition     = alltrue([for s in var.secrets : s.value_encrypted == null || s.type == "codespaces" || s.key_id != null])
+    error_message = "A secret using 'value_encrypted' must also set 'key_id', except for 'codespaces' secrets, whose resource does not accept it."
+  }
+
+  validation {
+    condition     = alltrue([for s in var.secrets : !s.is_variable || s.value != null])
+    error_message = "A variable (is_variable = true) must set 'value'; variables cannot be encrypted."
   }
 }
 

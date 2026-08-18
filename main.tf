@@ -134,16 +134,38 @@ module "files" {
   ]
 }
 
+module "environments" {
+  source   = "./modules/environment"
+  for_each = { for val in var.environments : val.name => val }
+
+  name       = each.value.name
+  repository = github_repository.this.name
+
+  can_admins_bypass        = each.value.can_admins_bypass
+  deployment_branch_policy = each.value.deployment_branch_policy
+  deployment_policies      = each.value.deployment_policies
+  prevent_self_review      = each.value.prevent_self_review
+  reviewers                = each.value.reviewers
+  secrets                  = each.value.secrets
+  variables                = each.value.variables
+  wait_timer               = each.value.wait_timer
+
+  depends_on = [
+    github_repository.this
+  ]
+}
+
 module "secrets" {
   source = "./modules/secrets"
   # NOTE: the key shape is load-bearing -- it is the state address of every managed
   # secret. Do not change it without shipping a state-migration path.
   for_each = { for val in var.secrets : format("%s-%s", lower(val.type), lower(val.name)) => val }
 
-  encrypted_value = each.value.encrypted_value
   name            = each.value.name
-  plaintext_value = each.value.plaintext_value
   repository      = github_repository.this.name
+  value           = each.value.value
+  value_encrypted = each.value.value_encrypted
+  key_id          = each.value.key_id
   is_variable     = each.value.is_variable
   type            = each.value.type
 
