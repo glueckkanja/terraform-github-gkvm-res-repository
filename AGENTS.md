@@ -12,7 +12,7 @@ A **glueckkanja Verified Module (GKVM)** that manages GitHub repositories, and n
 | Registry address | `glueckkanja/gkvm-res-repository/github` |
 | Repository | `glueckkanja/terraform-github-gkvm-res-repository` |
 | Provider | `integrations/github` — the only one |
-| Submodules | `modules/ruleset`, `modules/file`, `modules/secrets`, `modules/environment` |
+| Submodules | `modules/ruleset`, `modules/file`, `modules/secrets`, `modules/environment`, `modules/custom_property` |
 
 This repository was originally generated from the Azure Verified Modules (AVM) template, but it is **not an AVM module** and is not governed by AVM rules or tooling. Treat any leftover AVM convention you encounter as an artefact to remove, not a standard to uphold.
 
@@ -34,6 +34,7 @@ modules/ruleset/         github_repository_ruleset
 modules/file/            github_repository_file
 modules/secrets/         Actions / Codespaces / Dependabot secrets and Actions variables
 modules/environment/     Deployment environments, protection rules, env secrets and variables
+modules/custom_property/ Organization custom property values, for org-ruleset targeting
 examples/default/        the published example
 _header.md / _footer.md  terraform-docs fragments for the root README
 ```
@@ -45,7 +46,8 @@ Run these before opening a pull request. They need no Docker, no Azure and no cr
 ```bash
 terraform fmt -check -recursive -diff
 
-for d in . modules/ruleset modules/file modules/secrets modules/environment examples/default; do
+for d in . modules/ruleset modules/file modules/secrets modules/environment modules/custom_property \
+         examples/default examples/org-ruleset-target; do
   terraform -chdir="$d" init -backend=false -input=false
   terraform -chdir="$d" validate
 done
@@ -54,12 +56,13 @@ tflint --init
 tflint --recursive --minimum-failure-severity=error
 
 terraform-docs -c .terraform-docs.yml .
-for m in modules/*/; do terraform-docs -c .terraform-docs.yml "$m"; done
+for m in modules/*/;  do terraform-docs -c modules/.terraform-docs.yml "$m"; done
+for e in examples/*/; do terraform-docs -c examples/.terraform-docs.yml "$e"; done
 ```
 
 Commit any regenerated documentation — CI fails on README drift.
 
-`examples/default/README.md` embeds its own HCL source and is maintained by hand. Do not regenerate it with the root `.terraform-docs.yml`, which would strip that block.
+Example READMEs embed their own HCL source via `{{ include }}`, so they are generated too -- with `examples/.terraform-docs.yml`, never with the root config, which would strip the embedded block.
 
 ## Conventions
 

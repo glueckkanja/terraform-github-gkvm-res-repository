@@ -62,6 +62,68 @@ variable "auto_init" {
   nullable    = false
 }
 
+variable "custom_properties" {
+  type = list(object({
+    name  = string
+    type  = optional(string, "string")
+    value = list(string)
+  }))
+  default     = []
+  description = <<DESCRIPTION
+(Optional) A list of organization custom property values to set on the repository. Each object supports the following attributes:
+
+- `name` - (Required) The name of the custom property. The property must already be **defined at the organization level**; this module sets values, it does not create definitions.
+- `type` - (Optional) One of `string`, `single_select`, `multi_select`, `true_false` or `url`. Must match the organization definition's `value_type`. Defaults to `string`.
+- `value` - (Required) The value, always given as a list. `multi_select` accepts one or more entries; every other type accepts exactly one. For `true_false`, the entry must be the string `"true"` or `"false"`.
+
+Custom properties let an organization-level ruleset target repositories by metadata instead of by name, which is useful where repository administrators must not be able to disable their own branch protection.
+
+**NOTE:** setting values requires permission. When the organization definition uses `values_editable_by = "org_actors"` (the default), the token running this module needs the organization-level `custom_properties_org_values_editor` permission; repository `admin` alone is not sufficient.
+
+**NOTE:** `name` and `type` are replacement-forcing. Changing either destroys and recreates the value, during which the repository stops matching any organization ruleset selecting on it.
+DESCRIPTION
+  nullable    = false
+
+  validation {
+    condition     = length(distinct([for p in var.custom_properties : p.name])) == length(var.custom_properties)
+    error_message = "Each custom property 'name' must be unique."
+  }
+
+  validation {
+    condition     = alltrue([for p in var.custom_properties : length(p.name) > 0])
+    error_message = "A custom property 'name' must not be empty."
+  }
+
+  validation {
+    condition = alltrue([
+      for p in var.custom_properties :
+      contains(["string", "single_select", "multi_select", "true_false", "url"], p.type)
+    ])
+    error_message = "Each custom property 'type' must be one of 'string', 'single_select', 'multi_select', 'true_false' or 'url'."
+  }
+
+  validation {
+    condition = alltrue([
+      for p in var.custom_properties :
+      p.type == "multi_select" ? length(p.value) >= 1 : length(p.value) == 1
+    ])
+    error_message = "A 'multi_select' custom property needs at least one value; every other property type needs exactly one."
+  }
+
+  validation {
+    condition = alltrue([
+      for p in var.custom_properties :
+      p.type != "true_false" || alltrue([for v in p.value : contains(["true", "false"], v)])
+    ])
+    error_message = "A 'true_false' custom property value must be the string \"true\" or \"false\"."
+  }
+
+  validation {
+    condition     = alltrue(flatten([for p in var.custom_properties : [for v in p.value : v != ""]]))
+    error_message = "A custom property value must not be an empty string."
+  }
+}
+
 variable "default_branch" {
   type = object({
     branch = string

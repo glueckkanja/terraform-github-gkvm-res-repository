@@ -155,6 +155,25 @@ module "environments" {
   ]
 }
 
+# NOTE: ordering is deliberate. `depends_on` on `module.files` puts the property
+# last, so seed commits land while the repository is still unlabelled and the
+# organization ruleset that selects on this property arms only afterwards.
+# With no files configured, `module.files` is empty and the dependency is a no-op.
+module "custom_properties" {
+  source   = "./modules/custom_property"
+  for_each = { for val in var.custom_properties : val.name => val }
+
+  name       = each.value.name
+  repository = github_repository.this.name
+  type       = each.value.type
+  value      = each.value.value
+
+  depends_on = [
+    github_repository.this,
+    module.files,
+  ]
+}
+
 module "secrets" {
   source = "./modules/secrets"
   # NOTE: the key shape is load-bearing -- it is the state address of every managed
