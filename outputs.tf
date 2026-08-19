@@ -68,6 +68,16 @@ output "files" {
   value       = { for k, v in module.files : k => v.resource }
 }
 
+output "custom_properties" {
+  description = "A map of the custom property values set on the repository, keyed by property name."
+  value = { for k, v in module.custom_properties : k => {
+    resource_id = v.resource_id
+    name        = v.name
+    type        = v.type
+    value       = v.value
+  } }
+}
+
 output "environments" {
   description = <<DESCRIPTION
 A map of the created environments, keyed by environment name. Environment secret

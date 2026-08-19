@@ -4,6 +4,16 @@
 
 This is a Terraform resource module to manage a GitHub repository.
 
+It covers the repository itself along with its rulesets, files, Actions/Codespaces/Dependabot secrets and variables, deployment environments, and organization custom property values.
+
+## Custom properties and organization rulesets
+
+Setting custom property values lets an **organization-level** ruleset target this repository by metadata rather than by an explicitly maintained list of repository names.
+
+That matters where the repository's own administrators must not be able to switch off their branch protection: a repository-level ruleset can be disabled by anyone holding `admin` and is only restored on the next Terraform run, whereas an organization ruleset cannot be edited from the repository at all.
+
+This module stamps the property. It does not create the organization-level property *definition*, and it does not create the organization ruleset — both are organization-wide concerns that belong in the configuration owning organization settings. See the `org-ruleset-target` example for the full pattern.
+
 <!-- markdownlint-disable MD033 -->
 ## Requirements
 
@@ -98,6 +108,32 @@ Description: Whether to create an initial commit with empty README.
 Type: `bool`
 
 Default: `false`
+
+### <a name="input_custom_properties"></a> [custom\_properties](#input\_custom\_properties)
+
+Description: (Optional) A list of organization custom property values to set on the repository. Each object supports the following attributes:
+
+- `name` - (Required) The name of the custom property. The property must already be **defined at the organization level**; this module sets values, it does not create definitions.
+- `type` - (Optional) One of `string`, `single_select`, `multi_select`, `true_false` or `url`. Must match the organization definition's `value_type`. Defaults to `string`.
+- `value` - (Required) The value, always given as a list. `multi_select` accepts one or more entries; every other type accepts exactly one. For `true_false`, the entry must be the string `"true"` or `"false"`.
+
+Custom properties let an organization-level ruleset target repositories by metadata instead of by name, which is useful where repository administrators must not be able to disable their own branch protection.
+
+**NOTE:** setting values requires permission. When the organization definition uses `values_editable_by = "org_actors"` (the default), the token running this module needs the organization-level `custom_properties_org_values_editor` permission; repository `admin` alone is not sufficient.
+
+**NOTE:** `name` and `type` are replacement-forcing. Changing either destroys and recreates the value, during which the repository stops matching any organization ruleset selecting on it.
+
+Type:
+
+```hcl
+list(object({
+    name  = string
+    type  = optional(string, "string")
+    value = list(string)
+  }))
+```
+
+Default: `[]`
 
 ### <a name="input_default_branch"></a> [default\_branch](#input\_default\_branch)
 
@@ -562,6 +598,10 @@ Default: `false`
 
 The following outputs are exported:
 
+### <a name="output_custom_properties"></a> [custom\_properties](#output\_custom\_properties)
+
+Description: A map of the custom property values set on the repository, keyed by property name.
+
 ### <a name="output_default_branch"></a> [default\_branch](#output\_default\_branch)
 
 Description: The name of the default branch of the repository, or `null` when the default branch is not managed by this module.
@@ -631,6 +671,12 @@ Description: The visibility of the repository.
 ## Modules
 
 The following Modules are called:
+
+### <a name="module_custom_properties"></a> [custom\_properties](#module\_custom\_properties)
+
+Source: ./modules/custom_property
+
+Version:
 
 ### <a name="module_environments"></a> [environments](#module\_environments)
 
