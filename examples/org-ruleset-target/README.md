@@ -20,7 +20,7 @@ The token needs the organization-level `custom_properties_org_values_editor` per
 
 The module stamps custom properties *after* the `files` submodule has pushed, so seed commits land while the repository is still unlabelled and the ruleset arms only once content is in place.
 
-That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the onboarding app is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run.
+That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run.
 
 Note also that a successful property write does not guarantee the ruleset engine has already re-evaluated its selection. Treat a green apply as "property set", not as "protection active".
 
@@ -39,7 +39,7 @@ terraform {
 provider "github" {}
 
 locals {
-  property_name = "azere-managed"
+  property_name = "example-managed"
 }
 
 # ---------------------------------------------------------------------------
@@ -67,8 +67,8 @@ resource "github_organization_custom_properties" "managed" {
 module "repository" {
   source = "../../"
 
-  name        = "example-customer-repository"
-  description = "Created and labelled by the onboarding stack."
+  name        = "example-repository"
+  description = "Example repository, labelled so the organization ruleset below selects it."
   visibility  = "private"
   auto_init   = true
 
@@ -79,7 +79,7 @@ module "repository" {
   files = [
     {
       file           = "README.md"
-      content        = "# Example customer repository\n"
+      content        = "# Example repository\n"
       commit_message = "chore: seed repository"
     },
   ]
@@ -120,8 +120,9 @@ resource "github_organization_ruleset" "default_branch" {
     }
   }
 
-  # The onboarding app keeps pushing once the rule is armed. This is the
-  # durable exclusion; the module's internal ordering is only convenience.
+  # Whatever automation manages this repository still needs to push once the
+  # rule is armed, so it is excluded here. This is the durable exclusion; the
+  # module's internal ordering is only convenience.
   bypass_actors {
     actor_id    = 12345
     actor_type  = "Integration"

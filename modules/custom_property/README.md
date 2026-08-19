@@ -20,7 +20,7 @@ Setting a value also requires permission. When the definition uses `values_edita
 module "custom_property" {
   source = "glueckkanja/gkvm-res-repository/github//modules/custom_property"
 
-  name       = "azere-managed"
+  name       = "example-managed"
   repository = "example-repository"
   type       = "true_false"
   value      = ["true"]

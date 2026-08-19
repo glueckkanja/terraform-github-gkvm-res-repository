@@ -18,6 +18,6 @@ The token needs the organization-level `custom_properties_org_values_editor` per
 
 The module stamps custom properties *after* the `files` submodule has pushed, so seed commits land while the repository is still unlabelled and the ruleset arms only once content is in place.
 
-That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the onboarding app is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run.
+That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run.
 
 Note also that a successful property write does not guarantee the ruleset engine has already re-evaluated its selection. Treat a green apply as "property set", not as "protection active".
