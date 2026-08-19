@@ -12,7 +12,7 @@ terraform {
 provider "github" {}
 
 locals {
-  property_name = "azere-managed"
+  property_name = "example-managed"
 }
 
 # ---------------------------------------------------------------------------
@@ -40,8 +40,8 @@ resource "github_organization_custom_properties" "managed" {
 module "repository" {
   source = "../../"
 
-  name        = "example-customer-repository"
-  description = "Created and labelled by the onboarding stack."
+  name        = "example-repository"
+  description = "Example repository, labelled so the organization ruleset below selects it."
   visibility  = "private"
   auto_init   = true
 
@@ -52,7 +52,7 @@ module "repository" {
   files = [
     {
       file           = "README.md"
-      content        = "# Example customer repository\n"
+      content        = "# Example repository\n"
       commit_message = "chore: seed repository"
     },
   ]
@@ -93,8 +93,9 @@ resource "github_organization_ruleset" "default_branch" {
     }
   }
 
-  # The onboarding app keeps pushing once the rule is armed. This is the
-  # durable exclusion; the module's internal ordering is only convenience.
+  # Whatever automation manages this repository still needs to push once the
+  # rule is armed, so it is excluded here. This is the durable exclusion; the
+  # module's internal ordering is only convenience.
   bypass_actors {
     actor_id    = 12345
     actor_type  = "Integration"
