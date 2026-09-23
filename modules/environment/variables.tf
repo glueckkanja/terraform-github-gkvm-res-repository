@@ -68,7 +68,6 @@ DESCRIPTION
     condition     = alltrue([for p in var.deployment_policies : (p.branch_pattern == null) != (p.tag_pattern == null)])
     error_message = "Each deployment policy must set exactly one of 'branch_pattern' or 'tag_pattern'."
   }
-
   validation {
     condition = length(distinct([
       for p in var.deployment_policies :
@@ -104,7 +103,6 @@ DESCRIPTION
     condition     = var.reviewers == null || length(coalesce(var.reviewers.teams, [])) + length(coalesce(var.reviewers.users, [])) <= 6
     error_message = "An environment supports at most 6 reviewers in total across 'teams' and 'users'."
   }
-
   validation {
     condition     = var.reviewers == null || length(coalesce(var.reviewers.teams, [])) + length(coalesce(var.reviewers.users, [])) > 0
     error_message = "When 'reviewers' is set, at least one team or user must be given. Use null to disable required reviewers."
@@ -135,12 +133,10 @@ DESCRIPTION
     condition     = alltrue([for s in var.secrets : (s.value == null) != (s.value_encrypted == null)])
     error_message = "Each secret must set exactly one of 'value' or 'value_encrypted'."
   }
-
   validation {
     condition     = alltrue([for s in var.secrets : s.value_encrypted == null || s.key_id != null])
     error_message = "'key_id' is required whenever 'value_encrypted' is set."
   }
-
   validation {
     condition     = length(distinct([for s in var.secrets : s.name])) == length(var.secrets)
     error_message = "Each secret name must be unique within an environment."

@@ -1,20 +1,13 @@
 {
-  "name": "terraform-github-gkvm-res-repository",
-  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
-  "features": {
-    "ghcr.io/devcontainers/features/terraform:1": {
-      "version": "latest",
-      "tflint": "latest",
-      "terragrunt": "none"
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  },
-  "updateRemoteUserUID": true,
-  "onCreateCommand": "terraform version && tflint --version",
+  "name": "gkvm",
+  "image": "ghcr.io/glueckkanja/gkvm-tools:v0",
+  "workspaceFolder": "/src",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/src,type=bind",
   "customizations": {
     "vscode": {
       "extensions": [
         "EditorConfig.EditorConfig",
+        "OpenTofu.vscode-opentofu",
         "hashicorp.terraform"
       ]
     }

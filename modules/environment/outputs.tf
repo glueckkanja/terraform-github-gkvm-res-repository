@@ -1,14 +1,9 @@
 # NOTE: the secret resources are deliberately not exported, because
 # `github_actions_environment_secret` carries the `value` attribute.
 
-output "resource" {
-  description = "The full `github_repository_environment` resource object."
-  value       = github_repository_environment.this
-}
-
-output "resource_id" {
-  description = "The ID of the environment."
-  value       = github_repository_environment.this.id
+output "deployment_policies" {
+  description = "A map of the created deployment branch and tag policies, keyed by `<branch|tag>-<pattern>`."
+  value       = github_repository_environment_deployment_policy.this
 }
 
 output "name" {
@@ -21,9 +16,14 @@ output "repository_id" {
   value       = github_repository_environment.this.repository_id
 }
 
-output "deployment_policies" {
-  description = "A map of the created deployment branch and tag policies, keyed by `<branch|tag>-<pattern>`."
-  value       = github_repository_environment_deployment_policy.this
+output "resource" {
+  description = "The full `github_repository_environment` resource object."
+  value       = github_repository_environment.this
+}
+
+output "resource_id" {
+  description = "The ID of the environment."
+  value       = github_repository_environment.this.id
 }
 
 output "secrets" {

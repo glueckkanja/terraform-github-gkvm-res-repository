@@ -138,9 +138,8 @@ module "environments" {
   source   = "./modules/environment"
   for_each = { for val in var.environments : val.name => val }
 
-  name       = each.value.name
-  repository = github_repository.this.name
-
+  name                     = each.value.name
+  repository               = github_repository.this.name
   can_admins_bypass        = each.value.can_admins_bypass
   deployment_branch_policy = each.value.deployment_branch_policy
   deployment_policies      = each.value.deployment_policies
@@ -165,8 +164,8 @@ module "custom_properties" {
 
   name       = each.value.name
   repository = github_repository.this.name
-  type       = each.value.type
   value      = each.value.value
+  type       = each.value.type
 
   depends_on = [
     github_repository.this,
@@ -182,11 +181,11 @@ module "secrets" {
 
   name            = each.value.name
   repository      = github_repository.this.name
+  is_variable     = each.value.is_variable
+  key_id          = each.value.key_id
+  type            = each.value.type
   value           = each.value.value
   value_encrypted = each.value.value_encrypted
-  key_id          = each.value.key_id
-  is_variable     = each.value.is_variable
-  type            = each.value.type
 
   depends_on = [
     github_repository.this
