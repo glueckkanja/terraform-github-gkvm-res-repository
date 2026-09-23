@@ -27,13 +27,7 @@ module "repository" {
     branch = "main"
     rename = false
   }
-  description      = "This is an example repository."
-  has_issues       = true
-  has_projects     = true
-  has_wiki         = true
-  license_template = "mit"
-  visibility       = "public"
-
+  description = "This is an example repository."
   environments = [
     {
       name = "staging"
@@ -59,6 +53,11 @@ module "repository" {
       ]
     },
   ]
+  has_issues       = true
+  has_projects     = true
+  has_wiki         = true
+  license_template = "mit"
+  visibility       = "public"
 }
 ```
 

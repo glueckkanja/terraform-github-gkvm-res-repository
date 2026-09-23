@@ -88,12 +88,10 @@ DESCRIPTION
     condition     = length(distinct([for p in var.custom_properties : p.name])) == length(var.custom_properties)
     error_message = "Each custom property 'name' must be unique."
   }
-
   validation {
     condition     = alltrue([for p in var.custom_properties : length(p.name) > 0])
     error_message = "A custom property 'name' must not be empty."
   }
-
   validation {
     condition = alltrue([
       for p in var.custom_properties :
@@ -101,7 +99,6 @@ DESCRIPTION
     ])
     error_message = "Each custom property 'type' must be one of 'string', 'single_select', 'multi_select', 'true_false' or 'url'."
   }
-
   validation {
     condition = alltrue([
       for p in var.custom_properties :
@@ -109,7 +106,6 @@ DESCRIPTION
     ])
     error_message = "A 'multi_select' custom property needs at least one value; every other property type needs exactly one."
   }
-
   validation {
     condition = alltrue([
       for p in var.custom_properties :
@@ -117,7 +113,6 @@ DESCRIPTION
     ])
     error_message = "A 'true_false' custom property value must be the string \"true\" or \"false\"."
   }
-
   validation {
     condition     = alltrue(flatten([for p in var.custom_properties : [for v in p.value : v != ""]]))
     error_message = "A custom property value must not be an empty string."
@@ -212,7 +207,6 @@ DESCRIPTION
     condition     = length(distinct([for e in var.environments : e.name])) == length(var.environments)
     error_message = "Each environment 'name' must be unique."
   }
-
   validation {
     condition = alltrue([
       for e in var.environments :
@@ -220,7 +214,6 @@ DESCRIPTION
     ])
     error_message = "An environment with 'deployment_policies' must set 'deployment_branch_policy.custom_branch_policies' to true."
   }
-
   validation {
     condition = alltrue([
       for e in var.environments : e.deployment_branch_policy == null ||
@@ -228,7 +221,6 @@ DESCRIPTION
     ])
     error_message = "In 'deployment_branch_policy', exactly one of 'protected_branches' and 'custom_branch_policies' must be true."
   }
-
   validation {
     condition = alltrue(flatten([
       for e in var.environments : [
@@ -237,7 +229,6 @@ DESCRIPTION
     ]))
     error_message = "Each deployment policy must set exactly one of 'branch_pattern' or 'tag_pattern'."
   }
-
   validation {
     condition = alltrue([
       for e in var.environments : e.reviewers == null ||
@@ -245,14 +236,12 @@ DESCRIPTION
     ])
     error_message = "An environment supports at most 6 reviewers in total across 'teams' and 'users'."
   }
-
   validation {
     condition = alltrue([
       for e in var.environments : e.wait_timer == null || try(e.wait_timer >= 0 && e.wait_timer <= 43200, false)
     ])
     error_message = "The environment 'wait_timer' must be between 0 and 43200 minutes."
   }
-
   validation {
     condition = alltrue(flatten([
       for e in var.environments : [
@@ -261,7 +250,6 @@ DESCRIPTION
     ]))
     error_message = "Each environment secret must set exactly one of 'value' or 'value_encrypted'."
   }
-
   validation {
     condition = alltrue(flatten([
       for e in var.environments : [
@@ -270,7 +258,6 @@ DESCRIPTION
     ]))
     error_message = "An environment secret using 'value_encrypted' must also set 'key_id'."
   }
-
   validation {
     condition = alltrue([
       for e in var.environments :
@@ -522,12 +509,10 @@ DESCRIPTION
     condition     = alltrue([for r in var.repository_rulesets : contains(["disabled", "active", "evaluate"], r.enforcement)])
     error_message = "Each ruleset 'enforcement' must be one of 'disabled', 'active', or 'evaluate'."
   }
-
   validation {
     condition     = alltrue([for r in var.repository_rulesets : contains(["branch", "tag"], r.target)])
     error_message = "Each ruleset 'target' must be one of 'branch' or 'tag'."
   }
-
   validation {
     condition     = length(distinct([for r in var.repository_rulesets : r.name])) == length(var.repository_rulesets)
     error_message = "Each ruleset 'name' must be unique."
@@ -561,17 +546,14 @@ DESCRIPTION
     ])) == length(var.secrets)
     error_message = "Each secret must be unique by the combination of 'type' and 'name' (compared case-insensitively). Note that an Actions secret and an Actions variable cannot share a name within this module."
   }
-
   validation {
     condition     = alltrue([for s in var.secrets : (s.value == null) != (s.value_encrypted == null)])
     error_message = "Each secret must set exactly one of 'value' or 'value_encrypted'."
   }
-
   validation {
     condition     = alltrue([for s in var.secrets : s.value_encrypted == null || s.type == "codespaces" || s.key_id != null])
     error_message = "A secret using 'value_encrypted' must also set 'key_id', except for 'codespaces' secrets, whose resource does not accept it."
   }
-
   validation {
     condition     = alltrue([for s in var.secrets : !s.is_variable || s.value != null])
     error_message = "A variable (is_variable = true) must set 'value'; variables cannot be encrypted."

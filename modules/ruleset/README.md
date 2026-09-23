@@ -24,9 +24,9 @@ This example shows the most basic usage of the module. It creates a new ruleset 
 module "ruleset_creation" {
   source = "glueckkanja/gkvm-res-repository/github//modules/ruleset"
 
-  name       = "example-ruleset"
-  repository = "Example Repository"
-  target     = "branch"
+  name        = "example-ruleset"
+  repository  = "Example Repository"
+  target      = "branch"
   enforcement = "active"
 
   rules = {

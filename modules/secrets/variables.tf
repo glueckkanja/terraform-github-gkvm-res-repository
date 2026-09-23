@@ -1,37 +1,3 @@
-variable "value" {
-  type        = string
-  default     = null
-  description = "(Optional) Plaintext value of the secret or variable. The provider encrypts secret values before sending them to GitHub. Required when 'is_variable' is `true`."
-  sensitive   = true
-
-  validation {
-    condition     = (var.value == null) != (var.value_encrypted == null)
-    error_message = "Exactly one of 'value' or 'value_encrypted' must be set."
-  }
-
-  validation {
-    condition     = !var.is_variable || var.value != null
-    error_message = "'value' is required when 'is_variable' is true; variables cannot be encrypted."
-  }
-}
-
-variable "value_encrypted" {
-  type        = string
-  default     = null
-  description = "(Optional) Value already encrypted with the repository public key, in Base64 format. Only valid when 'is_variable' is `false`."
-}
-
-variable "key_id" {
-  type        = string
-  default     = null
-  description = "(Optional) The ID of the public key used to encrypt 'value_encrypted'. Required whenever 'value_encrypted' is set."
-
-  validation {
-    condition     = var.value_encrypted == null || var.type == "codespaces" || var.key_id != null
-    error_message = "'key_id' is required whenever 'value_encrypted' is set, except for 'codespaces' secrets, whose resource does not accept it."
-  }
-}
-
 variable "name" {
   type        = string
   description = "(Required) The name of the secret."
@@ -61,6 +27,17 @@ variable "is_variable" {
   }
 }
 
+variable "key_id" {
+  type        = string
+  default     = null
+  description = "(Optional) The ID of the public key used to encrypt 'value_encrypted'. Required whenever 'value_encrypted' is set."
+
+  validation {
+    condition     = var.value_encrypted == null || var.type == "codespaces" || var.key_id != null
+    error_message = "'key_id' is required whenever 'value_encrypted' is set, except for 'codespaces' secrets, whose resource does not accept it."
+  }
+}
+
 variable "type" {
   type        = string
   default     = "actions"
@@ -71,4 +48,26 @@ variable "type" {
     condition     = var.type == "actions" || var.type == "codespaces" || var.type == "dependabot"
     error_message = "The 'type' variable must be either 'actions', 'codespaces', or 'dependabot'."
   }
+}
+
+variable "value" {
+  type        = string
+  default     = null
+  description = "(Optional) Plaintext value of the secret or variable. The provider encrypts secret values before sending them to GitHub. Required when 'is_variable' is `true`."
+  sensitive   = true
+
+  validation {
+    condition     = (var.value == null) != (var.value_encrypted == null)
+    error_message = "Exactly one of 'value' or 'value_encrypted' must be set."
+  }
+  validation {
+    condition     = !var.is_variable || var.value != null
+    error_message = "'value' is required when 'is_variable' is true; variables cannot be encrypted."
+  }
+}
+
+variable "value_encrypted" {
+  type        = string
+  default     = null
+  description = "(Optional) Value already encrypted with the repository public key, in Base64 format. Only valid when 'is_variable' is `false`."
 }

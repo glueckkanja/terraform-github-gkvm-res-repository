@@ -67,23 +67,8 @@ resource "github_organization_custom_properties" "managed" {
 module "repository" {
   source = "../../"
 
-  name        = "example-repository"
-  description = "Example repository, labelled so the organization ruleset below selects it."
-  visibility  = "private"
-  auto_init   = true
-
-  default_branch = {
-    branch = "main"
-  }
-
-  files = [
-    {
-      file           = "README.md"
-      content        = "# Example repository\n"
-      commit_message = "chore: seed repository"
-    },
-  ]
-
+  name      = "example-repository"
+  auto_init = true
   custom_properties = [
     {
       name  = local.property_name
@@ -91,6 +76,18 @@ module "repository" {
       value = ["true"]
     },
   ]
+  default_branch = {
+    branch = "main"
+  }
+  description = "Example repository, labelled so the organization ruleset below selects it."
+  files = [
+    {
+      file           = "README.md"
+      content        = "# Example repository\n"
+      commit_message = "chore: seed repository"
+    },
+  ]
+  visibility = "private"
 
   depends_on = [github_organization_custom_properties.managed]
 }

@@ -20,7 +20,7 @@ This repository was originally generated from the Azure Verified Modules (AVM) t
 
 - **`integrations/github` is the only provider.** The module never authenticates against Azure. Do not add `azapi`, `azurerm`, `modtm` or `random` provider requirements.
 - **No telemetry.** The module collects nothing and makes no network calls beyond the GitHub API. Do not add telemetry resources, data sources or variables.
-- **No AVM tooling.** `Makefile`, the `avm` / `avm.bat` / `avm.ps1` helpers and the `.github/actions/*` composite actions were removed; they depended on `Azure/avm-terraform-governance`, which is archived and deprecated. Do not run or reinstate `./avm pre-commit`, `./avm pr-check`, `make autofix` or `make pre-commit`. `avmfix` in particular rewrites `terraform.tf` to the AVM provider baseline and would re-add the Azure providers this module deliberately dropped.
+- **Tooling is gkvm-tools, not AVM.** Checks and fixes run through [glueckkanja/gkvm-tools](https://github.com/glueckkanja/gkvm-tools) (`./gkvm pre-commit`, `./gkvm pr-check`); the Azure-only AVM pipeline (`Makefile`, `avm`, `make autofix`, the `azterraform` image) is gone and must not come back. gkvm-tools detects the `github` profile from `terraform.tf` and never adds Azure providers or telemetry.
 - **`for_each` keys are state addresses.** This module is consumed across many states. Changing a `for_each` key expression forces a destroy and recreate of every affected resource in every state, and `moved` blocks cannot repair keys computed from a variable — leaving consumers to run `terraform state mv` by hand. Treat key expressions as immutable unless you are deliberately shipping a migration, and say so explicitly in the pull request.
 
 ## Repository layout
@@ -41,28 +41,16 @@ _header.md / _footer.md  terraform-docs fragments for the root README
 
 ## Validating
 
-Run these before opening a pull request. They need no Docker, no Azure and no credentials, and they mirror `.github/workflows/ci.yml` exactly:
+Run the same checks CI runs before opening a pull request. Both need Docker (the pinned `ghcr.io/glueckkanja/gkvm-tools` image) and no credentials:
 
 ```bash
-terraform fmt -check -recursive -diff
-
-for d in . modules/ruleset modules/file modules/secrets modules/environment modules/custom_property \
-         examples/default examples/org-ruleset-target; do
-  terraform -chdir="$d" init -backend=false -input=false
-  terraform -chdir="$d" validate
-done
-
-tflint --init
-tflint --recursive --minimum-failure-severity=error
-
-terraform-docs -c .terraform-docs.yml .
-for m in modules/*/;  do terraform-docs -c modules/.terraform-docs.yml "$m"; done
-for e in examples/*/; do terraform-docs -c examples/.terraform-docs.yml "$e"; done
+./gkvm pre-commit   # tofu fmt, avmfix block ordering, terrafmt, terraform-docs — writes files
+./gkvm pr-check     # fmt, fix, docs drift, validate, tflint, unit tests, zizmor — read-only
 ```
 
-Commit any regenerated documentation — CI fails on README drift.
+Commit whatever `pre-commit` changes: CI fails on README or formatting drift.
 
-Example READMEs embed their own HCL source via `{{ include }}`, so they are generated too -- with `examples/.terraform-docs.yml`, never with the root config, which would strip the embedded block.
+Example READMEs embed their own HCL source via `{{ include }}`, so they are generated too -- with `examples/.terraform-docs.yml`, never with the root config, which would strip the embedded block. gkvm-tools resolves the config per scope automatically.
 
 ## Conventions
 
