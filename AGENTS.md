@@ -37,6 +37,7 @@ modules/environment/     Deployment environments, protection rules, env secrets 
 modules/custom_property/ Organization custom property values, for org-ruleset targeting
 examples/default/        the published example
 _header.md / _footer.md  terraform-docs fragments for the root README
+tests/unit/              tofu test suites with a mock provider, see tests/README.md
 ```
 
 ## Validating
@@ -49,6 +50,8 @@ Run the same checks CI runs before opening a pull request. Both need Docker (the
 ```
 
 Commit whatever `pre-commit` changes: CI fails on README or formatting drift.
+
+A change to an input validation or to a `for_each` key expression needs a matching unit test in `tests/unit/`; the state-address keys are asserted there on purpose.
 
 Example READMEs embed their own HCL source via `{{ include }}`, so they are generated too -- with `examples/.terraform-docs.yml`, never with the root config, which would strip the embedded block. gkvm-tools resolves the config per scope automatically.
 
