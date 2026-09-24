@@ -33,7 +33,12 @@ jobs:
       binary: tofu
       # off | smoke (plan) | e2e (apply + destroy); smoke and e2e need the
       # "test" environment with credentials
-      examples: "off"
+      #
+      # e2e applies and destroys every example in the gkvm-e2e organization,
+      # authenticating as the GitHub App whose private key is the environment
+      # secret GKVM_GITHUB_APP_PEM_FILE. examples/org-ruleset-target carries an
+      # .e2eignore and is skipped; see the file for why.
+      examples: e2e
     # Organisation secrets for example runs (only used when examples != off).
     secrets:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
