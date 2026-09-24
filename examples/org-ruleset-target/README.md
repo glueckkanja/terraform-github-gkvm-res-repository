@@ -24,7 +24,9 @@ That ordering is convenience, not a guarantee. The durable protection for automa
 
 ## Names
 
-The repository, the organization ruleset and the property definition all carry a per-run random suffix. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object. That matters here because this example is applied and destroyed for real on every pull request.
+The repository, the organization ruleset and the property definition all carry the `gkvm_suffix` input. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object, and this example is applied and destroyed for real on every pull request.
+
+The suffix is an input rather than a `random_string` resource because the property name derived from it becomes a `for_each` key inside the module. Those keys must be known at plan time, which a resource attribute is not: a random value there fails the apply with `Invalid for_each argument`.
 
 Note also that a successful property write does not guarantee the ruleset engine has already re-evaluated its selection. Treat a green apply as "property set", not as "protection active".
 
@@ -37,10 +39,6 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.13"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
   }
 }
 
@@ -51,16 +49,8 @@ provider "github" {}
 # organization ruleset and the property definition are all organization-wide
 # names, so a fixed name would make two concurrent runs fight over the same
 # object. The gkvm-e2e- prefix makes any leftover recognisable and sweepable.
-resource "random_string" "suffix" {
-  length  = 6
-  lower   = true
-  numeric = true
-  special = false
-  upper   = false
-}
-
 locals {
-  name = "gkvm-e2e-orgruleset-${random_string.suffix.result}"
+  name = "gkvm-e2e-orgruleset-${var.gkvm_suffix}"
   # Custom property names are more restrictive than repository names, so this one
   # uses underscores.
   property_name = replace(local.name, "-", "_")
@@ -181,15 +171,12 @@ The following requirements are needed by this module:
 
 - <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
-- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
-
 ## Resources
 
 The following resources are used by this module:
 
 - [github_organization_custom_properties.managed](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_custom_properties) (resource)
 - [github_organization_ruleset.default_branch](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_ruleset) (resource)
-- [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) (resource)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
@@ -214,6 +201,20 @@ described in the example's README.
 Type: `number`
 
 Default: `null`
+
+### <a name="input_gkvm_suffix"></a> [gkvm\_suffix](#input\_gkvm\_suffix)
+
+Description: Suffix appended to every name this example creates, so that two runs never fight  
+over the same organization-wide object. The end-to-end runner sets it per run  
+through TF\_VAR\_gkvm\_suffix.
+
+It is an input rather than a `random_string` resource on purpose: the property  
+name derived from it becomes a `for_each` key inside the module, and those must  
+be known at plan time, which a resource attribute is not.
+
+Type: `string`
+
+Default: `"local"`
 
 ## Outputs
 

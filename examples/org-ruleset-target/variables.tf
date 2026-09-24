@@ -12,3 +12,17 @@ it, because the bypass actor is the durable protection for automation, as
 described in the example's README.
 DESCRIPTION
 }
+
+variable "gkvm_suffix" {
+  type        = string
+  default     = "local"
+  description = <<DESCRIPTION
+Suffix appended to every name this example creates, so that two runs never fight
+over the same organization-wide object. The end-to-end runner sets it per run
+through TF_VAR_gkvm_suffix.
+
+It is an input rather than a `random_string` resource on purpose: the property
+name derived from it becomes a `for_each` key inside the module, and those must
+be known at plan time, which a resource attribute is not.
+DESCRIPTION
+}

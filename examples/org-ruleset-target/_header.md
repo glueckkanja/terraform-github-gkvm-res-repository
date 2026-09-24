@@ -22,6 +22,8 @@ That ordering is convenience, not a guarantee. The durable protection for automa
 
 ## Names
 
-The repository, the organization ruleset and the property definition all carry a per-run random suffix. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object. That matters here because this example is applied and destroyed for real on every pull request.
+The repository, the organization ruleset and the property definition all carry the `gkvm_suffix` input. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object, and this example is applied and destroyed for real on every pull request.
+
+The suffix is an input rather than a `random_string` resource because the property name derived from it becomes a `for_each` key inside the module. Those keys must be known at plan time, which a resource attribute is not: a random value there fails the apply with `Invalid for_each argument`.
 
 Note also that a successful property write does not guarantee the ruleset engine has already re-evaluated its selection. Treat a green apply as "property set", not as "protection active".

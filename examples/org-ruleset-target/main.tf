@@ -6,10 +6,6 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.13"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
   }
 }
 
@@ -20,16 +16,8 @@ provider "github" {}
 # organization ruleset and the property definition are all organization-wide
 # names, so a fixed name would make two concurrent runs fight over the same
 # object. The gkvm-e2e- prefix makes any leftover recognisable and sweepable.
-resource "random_string" "suffix" {
-  length  = 6
-  lower   = true
-  numeric = true
-  special = false
-  upper   = false
-}
-
 locals {
-  name = "gkvm-e2e-orgruleset-${random_string.suffix.result}"
+  name = "gkvm-e2e-orgruleset-${var.gkvm_suffix}"
   # Custom property names are more restrictive than repository names, so this one
   # uses underscores.
   property_name = replace(local.name, "-", "_")
