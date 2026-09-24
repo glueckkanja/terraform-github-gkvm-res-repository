@@ -20,7 +20,11 @@ The token needs the organization-level `custom_properties_org_values_editor` per
 
 The module stamps custom properties *after* the `files` submodule has pushed, so seed commits land while the repository is still unlabelled and the ruleset arms only once content is in place.
 
-That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run.
+That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run. Set `automation_app_id` to the id of the GitHub App that owns these repositories, not to its installation id.
+
+## Names
+
+The repository, the organization ruleset and the property definition all carry a per-run random suffix. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object. That matters here because this example is applied and destroyed for real on every pull request.
 
 Note also that a successful property write does not guarantee the ruleset engine has already re-evaluated its selection. Treat a green apply as "property set", not as "protection active".
 
@@ -33,13 +37,33 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.13"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
   }
 }
 
 provider "github" {}
 
+# The end-to-end test applies this example for real and destroys it again. Every
+# object it creates therefore carries a per-run suffix: the repository, the
+# organization ruleset and the property definition are all organization-wide
+# names, so a fixed name would make two concurrent runs fight over the same
+# object. The gkvm-e2e- prefix makes any leftover recognisable and sweepable.
+resource "random_string" "suffix" {
+  length  = 6
+  lower   = true
+  numeric = true
+  special = false
+  upper   = false
+}
+
 locals {
-  property_name = "example-managed"
+  name = "gkvm-e2e-orgruleset-${random_string.suffix.result}"
+  # Custom property names are more restrictive than repository names, so this one
+  # uses underscores.
+  property_name = replace(local.name, "-", "_")
 }
 
 # ---------------------------------------------------------------------------
@@ -67,7 +91,7 @@ resource "github_organization_custom_properties" "managed" {
 module "repository" {
   source = "../../"
 
-  name      = "example-repository"
+  name      = local.name
   auto_init = true
   custom_properties = [
     {
@@ -99,7 +123,7 @@ module "repository" {
 # is done by stamping the property, not by editing a name list here.
 # ---------------------------------------------------------------------------
 resource "github_organization_ruleset" "default_branch" {
-  name        = "protect-default-branch-on-managed-repos"
+  name        = "${local.name}-protect-default-branch"
   target      = "branch"
   enforcement = "active"
 
@@ -120,10 +144,17 @@ resource "github_organization_ruleset" "default_branch" {
   # Whatever automation manages this repository still needs to push once the
   # rule is armed, so it is excluded here. This is the durable exclusion; the
   # module's internal ordering is only convenience.
-  bypass_actors {
-    actor_id    = 12345
-    actor_type  = "Integration"
-    bypass_mode = "always"
+  #
+  # Configured only when an App id is supplied, so the example applies cleanly in
+  # any organization. A real configuration should always set it.
+  dynamic "bypass_actors" {
+    for_each = var.automation_app_id == null ? [] : [1]
+
+    content {
+      actor_id    = var.automation_app_id
+      actor_type  = "Integration"
+      bypass_mode = "always"
+    }
   }
 
   rules {
@@ -150,12 +181,15 @@ The following requirements are needed by this module:
 
 - <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
+- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
+
 ## Resources
 
 The following resources are used by this module:
 
 - [github_organization_custom_properties.managed](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_custom_properties) (resource)
 - [github_organization_ruleset.default_branch](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_ruleset) (resource)
+- [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) (resource)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
@@ -164,7 +198,22 @@ No required inputs.
 
 ## Optional Inputs
 
-No optional inputs.
+The following input variables are optional (have default values):
+
+### <a name="input_automation_app_id"></a> [automation\_app\_id](#input\_automation\_app\_id)
+
+Description: Optional. The id of the GitHub App that manages these repositories, which is  
+then allowed to bypass the organization ruleset so it can still push once the  
+rule is armed. Use the App id, not the installation id.
+
+Left unset no bypass actor is configured, which is how the end-to-end test runs  
+this example: it must work in any organization. A real configuration should set  
+it, because the bypass actor is the durable protection for automation, as  
+described in the example's README.
+
+Type: `number`
+
+Default: `null`
 
 ## Outputs
 
