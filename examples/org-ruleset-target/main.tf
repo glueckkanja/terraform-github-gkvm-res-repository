@@ -6,6 +6,10 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.13"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.13"
+    }
   }
 }
 
@@ -43,6 +47,23 @@ resource "github_organization_custom_properties" "managed" {
 }
 
 # ---------------------------------------------------------------------------
+# 1a. A destroy-time drain in front of the definition.
+#
+# Deleting the definition straight after the labelled repository and the
+# ruleset that selects on it makes GitHub answer the delete with a 500, after
+# about nine seconds and reproducibly, even though the deletion itself goes
+# through. The de-indexing behind those two references is evidently
+# asynchronous. This resource sits between the definition and everything that
+# references it, so on destroy the references are gone a while before the
+# definition is removed.
+# ---------------------------------------------------------------------------
+resource "time_sleep" "property_propagation" {
+  destroy_duration = "30s"
+
+  depends_on = [github_organization_custom_properties.managed]
+}
+
+# ---------------------------------------------------------------------------
 # 2. The repository, stamped with the property.
 # ---------------------------------------------------------------------------
 module "repository" {
@@ -70,7 +91,7 @@ module "repository" {
   ]
   visibility = "private"
 
-  depends_on = [github_organization_custom_properties.managed]
+  depends_on = [time_sleep.property_propagation]
 }
 
 # ---------------------------------------------------------------------------
@@ -125,5 +146,5 @@ resource "github_organization_ruleset" "default_branch" {
     }
   }
 
-  depends_on = [github_organization_custom_properties.managed]
+  depends_on = [time_sleep.property_propagation]
 }

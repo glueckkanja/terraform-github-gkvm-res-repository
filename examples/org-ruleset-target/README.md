@@ -22,6 +22,15 @@ The module stamps custom properties *after* the `files` submodule has pushed, so
 
 That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run. Set `automation_app_id` to the id of the GitHub App that owns these repositories, not to its installation id.
 
+## Destroying
+
+The property definition is removed last, and not immediately. GitHub answers a
+delete of a definition that a ruleset condition and a repository value referenced
+moments earlier with a `500`, reproducibly, although the deletion itself goes
+through; the de-indexing behind those references is asynchronous. The
+`time_sleep.property_propagation` resource therefore holds the destroy for half a
+minute between the last reference and the definition.
+
 ## Names
 
 The repository, the organization ruleset and the property definition all carry the `gkvm_suffix` input. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object, and this example is applied and destroyed for real on every pull request.
@@ -38,6 +47,10 @@ terraform {
     github = {
       source  = "integrations/github"
       version = "~> 6.13"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.13"
     }
   }
 }
@@ -76,6 +89,23 @@ resource "github_organization_custom_properties" "managed" {
 }
 
 # ---------------------------------------------------------------------------
+# 1a. A destroy-time drain in front of the definition.
+#
+# Deleting the definition straight after the labelled repository and the
+# ruleset that selects on it makes GitHub answer the delete with a 500, after
+# about nine seconds and reproducibly, even though the deletion itself goes
+# through. The de-indexing behind those two references is evidently
+# asynchronous. This resource sits between the definition and everything that
+# references it, so on destroy the references are gone a while before the
+# definition is removed.
+# ---------------------------------------------------------------------------
+resource "time_sleep" "property_propagation" {
+  destroy_duration = "30s"
+
+  depends_on = [github_organization_custom_properties.managed]
+}
+
+# ---------------------------------------------------------------------------
 # 2. The repository, stamped with the property.
 # ---------------------------------------------------------------------------
 module "repository" {
@@ -103,7 +133,7 @@ module "repository" {
   ]
   visibility = "private"
 
-  depends_on = [github_organization_custom_properties.managed]
+  depends_on = [time_sleep.property_propagation]
 }
 
 # ---------------------------------------------------------------------------
@@ -158,7 +188,7 @@ resource "github_organization_ruleset" "default_branch" {
     }
   }
 
-  depends_on = [github_organization_custom_properties.managed]
+  depends_on = [time_sleep.property_propagation]
 }
 ```
 
@@ -171,12 +201,15 @@ The following requirements are needed by this module:
 
 - <a name="requirement_github"></a> [github](#requirement\_github) (~> 6.13)
 
+- <a name="requirement_time"></a> [time](#requirement\_time) (~> 0.13)
+
 ## Resources
 
 The following resources are used by this module:
 
 - [github_organization_custom_properties.managed](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_custom_properties) (resource)
 - [github_organization_ruleset.default_branch](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_ruleset) (resource)
+- [time_sleep.property_propagation](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) (resource)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
