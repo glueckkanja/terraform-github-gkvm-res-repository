@@ -18,9 +18,10 @@ provider "github" {}
 # object. The gkvm-e2e- prefix makes any leftover recognisable and sweepable.
 locals {
   name = "gkvm-e2e-orgruleset-${var.gkvm_suffix}"
-  # Custom property names are more restrictive than repository names, so this one
-  # uses underscores.
-  property_name = replace(local.name, "-", "_")
+  # Custom property names are more restrictive than repository names, so a
+  # suffixed one uses underscores. An existing definition is named by input
+  # instead, since its name is whatever the organization already calls it.
+  property_name = coalesce(var.property_name, replace(local.name, "-", "_"))
 }
 
 # ---------------------------------------------------------------------------
@@ -34,8 +35,14 @@ locals {
 # `values_editable_by = "org_actors"` is the setting that makes this worth
 # doing: it prevents repository administrators from editing their own
 # property value to drop out of the ruleset below.
+#
+# `manage_property_definition = false` points the rest of the example at a
+# definition the organization already owns, which is both the realistic case
+# and how the end-to-end test runs it. See the README.
 # ---------------------------------------------------------------------------
 resource "github_organization_custom_properties" "managed" {
+  count = var.manage_property_definition ? 1 : 0
+
   property_name      = local.property_name
   value_type         = "true_false"
   required           = false

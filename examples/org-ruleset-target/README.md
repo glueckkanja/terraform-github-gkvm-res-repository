@@ -22,6 +22,22 @@ The module stamps custom properties *after* the `files` submodule has pushed, so
 
 That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run. Set `automation_app_id` to the id of the GitHub App that owns these repositories, not to its installation id.
 
+## The property definition
+
+The definition is an organization-wide singleton. In a real estate it is created
+once, by whatever configuration owns organization settings, and every
+configuration that merely *targets* it sets `manage_property_definition = false`
+and names it through `property_name`. The default is `true` only so that this
+example reads as a whole.
+
+This repository's end-to-end run uses the `false` path, against a definition
+created by hand in the sandbox organization. That is not only realism: GitHub
+answers `DELETE /orgs/{org}/properties/schema/{name}` with a `500`, reproducibly
+and after about nine seconds, with the deletion itself still going through. The
+reference the ruleset and the repository value hold is already gone by then, and
+a thirty-second delay in between changes nothing. An example that created a
+definition could therefore not destroy itself.
+
 ## Names
 
 The repository, the organization ruleset and the property definition all carry the `gkvm_suffix` input. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object, and this example is applied and destroyed for real on every pull request.
@@ -51,9 +67,10 @@ provider "github" {}
 # object. The gkvm-e2e- prefix makes any leftover recognisable and sweepable.
 locals {
   name = "gkvm-e2e-orgruleset-${var.gkvm_suffix}"
-  # Custom property names are more restrictive than repository names, so this one
-  # uses underscores.
-  property_name = replace(local.name, "-", "_")
+  # Custom property names are more restrictive than repository names, so a
+  # suffixed one uses underscores. An existing definition is named by input
+  # instead, since its name is whatever the organization already calls it.
+  property_name = coalesce(var.property_name, replace(local.name, "-", "_"))
 }
 
 # ---------------------------------------------------------------------------
@@ -67,8 +84,14 @@ locals {
 # `values_editable_by = "org_actors"` is the setting that makes this worth
 # doing: it prevents repository administrators from editing their own
 # property value to drop out of the ruleset below.
+#
+# `manage_property_definition = false` points the rest of the example at a
+# definition the organization already owns, which is both the realistic case
+# and how the end-to-end test runs it. See the README.
 # ---------------------------------------------------------------------------
 resource "github_organization_custom_properties" "managed" {
+  count = var.manage_property_definition ? 1 : 0
+
   property_name      = local.property_name
   value_type         = "true_false"
   required           = false
@@ -215,6 +238,37 @@ be known at plan time, which a resource attribute is not.
 Type: `string`
 
 Default: `"local"`
+
+### <a name="input_manage_property_definition"></a> [manage\_property\_definition](#input\_manage\_property\_definition)
+
+Description: Whether this configuration creates the organization property definition, or  
+expects one the organization already owns.
+
+The definition is an organization-wide singleton, so in a real estate it is  
+declared once, by whatever configuration owns organization settings, and every  
+other configuration sets this to `false` and names it through `property_name`.  
+The default is `true` only so that this example reads as a whole.
+
+The end-to-end test runs it as `false` for a second reason, described in the  
+README: GitHub answers a delete of a property definition with a `500`, so an  
+example that created one could not destroy itself.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_property_name"></a> [property\_name](#input\_property\_name)
+
+Description: Name of the organization custom property that the ruleset selects on, and that  
+the repository is stamped with.
+
+Left unset the name is derived from `gkvm_suffix`, which suits a definition this  
+configuration creates itself. Set it to name a definition the organization  
+already owns; that is required when `manage_property_definition` is `false`.
+
+Type: `string`
+
+Default: `null`
 
 ## Outputs
 
