@@ -20,7 +20,29 @@ The token needs the organization-level `custom_properties_org_values_editor` per
 
 The module stamps custom properties *after* the `files` submodule has pushed, so seed commits land while the repository is still unlabelled and the ruleset arms only once content is in place.
 
-That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run.
+That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run. Set `automation_app_id` to the id of the GitHub App that owns these repositories, not to its installation id.
+
+## The property definition
+
+The definition is an organization-wide singleton. In a real estate it is created
+once, by whatever configuration owns organization settings, and every
+configuration that merely *targets* it sets `manage_property_definition = false`
+and names it through `property_name`. The default is `true` only so that this
+example reads as a whole.
+
+This repository's end-to-end run uses the `false` path, against a definition
+created by hand in the sandbox organization. That is not only realism: GitHub
+answers `DELETE /orgs/{org}/properties/schema/{name}` with a `500`, reproducibly
+and after about nine seconds, with the deletion itself still going through. The
+reference the ruleset and the repository value hold is already gone by then, and
+a thirty-second delay in between changes nothing. An example that created a
+definition could therefore not destroy itself.
+
+## Names
+
+The repository, the organization ruleset and the property definition all carry the `gkvm_suffix` input. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object, and this example is applied and destroyed for real on every pull request.
+
+The suffix is an input rather than a `random_string` resource because the property name derived from it becomes a `for_each` key inside the module. Those keys must be known at plan time, which a resource attribute is not: a random value there fails the apply with `Invalid for_each argument`.
 
 Note also that a successful property write does not guarantee the ruleset engine has already re-evaluated its selection. Treat a green apply as "property set", not as "protection active".
 
@@ -38,8 +60,17 @@ terraform {
 
 provider "github" {}
 
+# The end-to-end test applies this example for real and destroys it again. Every
+# object it creates therefore carries a per-run suffix: the repository, the
+# organization ruleset and the property definition are all organization-wide
+# names, so a fixed name would make two concurrent runs fight over the same
+# object. The gkvm-e2e- prefix makes any leftover recognisable and sweepable.
 locals {
-  property_name = "example-managed"
+  name = "gkvm-e2e-orgruleset-${var.gkvm_suffix}"
+  # Custom property names are more restrictive than repository names, so a
+  # suffixed one uses underscores. An existing definition is named by input
+  # instead, since its name is whatever the organization already calls it.
+  property_name = coalesce(var.property_name, replace(local.name, "-", "_"))
 }
 
 # ---------------------------------------------------------------------------
@@ -53,8 +84,14 @@ locals {
 # `values_editable_by = "org_actors"` is the setting that makes this worth
 # doing: it prevents repository administrators from editing their own
 # property value to drop out of the ruleset below.
+#
+# `manage_property_definition = false` points the rest of the example at a
+# definition the organization already owns, which is both the realistic case
+# and how the end-to-end test runs it. See the README.
 # ---------------------------------------------------------------------------
 resource "github_organization_custom_properties" "managed" {
+  count = var.manage_property_definition ? 1 : 0
+
   property_name      = local.property_name
   value_type         = "true_false"
   required           = false
@@ -67,7 +104,7 @@ resource "github_organization_custom_properties" "managed" {
 module "repository" {
   source = "../../"
 
-  name      = "example-repository"
+  name      = local.name
   auto_init = true
   custom_properties = [
     {
@@ -99,7 +136,7 @@ module "repository" {
 # is done by stamping the property, not by editing a name list here.
 # ---------------------------------------------------------------------------
 resource "github_organization_ruleset" "default_branch" {
-  name        = "protect-default-branch-on-managed-repos"
+  name        = "${local.name}-protect-default-branch"
   target      = "branch"
   enforcement = "active"
 
@@ -120,10 +157,17 @@ resource "github_organization_ruleset" "default_branch" {
   # Whatever automation manages this repository still needs to push once the
   # rule is armed, so it is excluded here. This is the durable exclusion; the
   # module's internal ordering is only convenience.
-  bypass_actors {
-    actor_id    = 12345
-    actor_type  = "Integration"
-    bypass_mode = "always"
+  #
+  # Configured only when an App id is supplied, so the example applies cleanly in
+  # any organization. A real configuration should always set it.
+  dynamic "bypass_actors" {
+    for_each = var.automation_app_id == null ? [] : [1]
+
+    content {
+      actor_id    = var.automation_app_id
+      actor_type  = "Integration"
+      bypass_mode = "always"
+    }
   }
 
   rules {
@@ -164,7 +208,67 @@ No required inputs.
 
 ## Optional Inputs
 
-No optional inputs.
+The following input variables are optional (have default values):
+
+### <a name="input_automation_app_id"></a> [automation\_app\_id](#input\_automation\_app\_id)
+
+Description: Optional. The id of the GitHub App that manages these repositories, which is  
+then allowed to bypass the organization ruleset so it can still push once the  
+rule is armed. Use the App id, not the installation id.
+
+Left unset no bypass actor is configured, which is how the end-to-end test runs  
+this example: it must work in any organization. A real configuration should set  
+it, because the bypass actor is the durable protection for automation, as  
+described in the example's README.
+
+Type: `number`
+
+Default: `null`
+
+### <a name="input_gkvm_suffix"></a> [gkvm\_suffix](#input\_gkvm\_suffix)
+
+Description: Suffix appended to every name this example creates, so that two runs never fight  
+over the same organization-wide object. The end-to-end runner sets it per run  
+through TF\_VAR\_gkvm\_suffix.
+
+It is an input rather than a `random_string` resource on purpose: the property  
+name derived from it becomes a `for_each` key inside the module, and those must  
+be known at plan time, which a resource attribute is not.
+
+Type: `string`
+
+Default: `"local"`
+
+### <a name="input_manage_property_definition"></a> [manage\_property\_definition](#input\_manage\_property\_definition)
+
+Description: Whether this configuration creates the organization property definition, or  
+expects one the organization already owns.
+
+The definition is an organization-wide singleton, so in a real estate it is  
+declared once, by whatever configuration owns organization settings, and every  
+other configuration sets this to `false` and names it through `property_name`.  
+The default is `true` only so that this example reads as a whole.
+
+The end-to-end test runs it as `false` for a second reason, described in the  
+README: GitHub answers a delete of a property definition with a `500`, so an  
+example that created one could not destroy itself.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_property_name"></a> [property\_name](#input\_property\_name)
+
+Description: Name of the organization custom property that the ruleset selects on, and that  
+the repository is stamped with.
+
+Left unset the name is derived from `gkvm_suffix`, which suits a definition this  
+configuration creates itself. Set it to name a definition the organization  
+already owns; that is required when `manage_property_definition` is `false`.
+
+Type: `string`
+
+Default: `null`
 
 ## Outputs
 

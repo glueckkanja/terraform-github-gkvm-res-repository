@@ -16,6 +16,11 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 
+# An exception: an example's e2e.auto.tfvars holds the inputs this repository's
+# end-to-end run needs, carries no secrets, and is useless unless it is checked
+# in. Everything an example run authenticates with comes from the environment.
+!examples/*/e2e.auto.tfvars
+
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in
 override.tf

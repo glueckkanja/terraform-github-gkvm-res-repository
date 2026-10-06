@@ -11,8 +11,17 @@ terraform {
 
 provider "github" {}
 
+# The end-to-end test applies this example for real and destroys it again. Every
+# object it creates therefore carries a per-run suffix: the repository, the
+# organization ruleset and the property definition are all organization-wide
+# names, so a fixed name would make two concurrent runs fight over the same
+# object. The gkvm-e2e- prefix makes any leftover recognisable and sweepable.
 locals {
-  property_name = "example-managed"
+  name = "gkvm-e2e-orgruleset-${var.gkvm_suffix}"
+  # Custom property names are more restrictive than repository names, so a
+  # suffixed one uses underscores. An existing definition is named by input
+  # instead, since its name is whatever the organization already calls it.
+  property_name = coalesce(var.property_name, replace(local.name, "-", "_"))
 }
 
 # ---------------------------------------------------------------------------
@@ -26,8 +35,14 @@ locals {
 # `values_editable_by = "org_actors"` is the setting that makes this worth
 # doing: it prevents repository administrators from editing their own
 # property value to drop out of the ruleset below.
+#
+# `manage_property_definition = false` points the rest of the example at a
+# definition the organization already owns, which is both the realistic case
+# and how the end-to-end test runs it. See the README.
 # ---------------------------------------------------------------------------
 resource "github_organization_custom_properties" "managed" {
+  count = var.manage_property_definition ? 1 : 0
+
   property_name      = local.property_name
   value_type         = "true_false"
   required           = false
@@ -40,7 +55,7 @@ resource "github_organization_custom_properties" "managed" {
 module "repository" {
   source = "../../"
 
-  name      = "example-repository"
+  name      = local.name
   auto_init = true
   custom_properties = [
     {
@@ -72,7 +87,7 @@ module "repository" {
 # is done by stamping the property, not by editing a name list here.
 # ---------------------------------------------------------------------------
 resource "github_organization_ruleset" "default_branch" {
-  name        = "protect-default-branch-on-managed-repos"
+  name        = "${local.name}-protect-default-branch"
   target      = "branch"
   enforcement = "active"
 
@@ -93,10 +108,17 @@ resource "github_organization_ruleset" "default_branch" {
   # Whatever automation manages this repository still needs to push once the
   # rule is armed, so it is excluded here. This is the durable exclusion; the
   # module's internal ordering is only convenience.
-  bypass_actors {
-    actor_id    = 12345
-    actor_type  = "Integration"
-    bypass_mode = "always"
+  #
+  # Configured only when an App id is supplied, so the example applies cleanly in
+  # any organization. A real configuration should always set it.
+  dynamic "bypass_actors" {
+    for_each = var.automation_app_id == null ? [] : [1]
+
+    content {
+      actor_id    = var.automation_app_id
+      actor_type  = "Integration"
+      bypass_mode = "always"
+    }
   }
 
   rules {
