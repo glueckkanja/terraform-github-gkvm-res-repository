@@ -20,15 +20,6 @@ The module stamps custom properties *after* the `files` submodule has pushed, so
 
 That ordering is convenience, not a guarantee. The durable protection for automation is the bypass actor on the ruleset: the identity that manages the repository is listed in `bypass_actors`, so it can still push once the rule is armed, on this and any future run. Set `automation_app_id` to the id of the GitHub App that owns these repositories, not to its installation id.
 
-## Destroying
-
-The property definition is removed last, and not immediately. GitHub answers a
-delete of a definition that a ruleset condition and a repository value referenced
-moments earlier with a `500`, reproducibly, although the deletion itself goes
-through; the de-indexing behind those references is asynchronous. The
-`time_sleep.property_propagation` resource therefore holds the destroy for half a
-minute between the last reference and the definition.
-
 ## Names
 
 The repository, the organization ruleset and the property definition all carry the `gkvm_suffix` input. Two of those three are organization-wide names, so a fixed name would make two concurrent runs of this example fight over the same object, and this example is applied and destroyed for real on every pull request.
